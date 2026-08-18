@@ -113,15 +113,27 @@ body {
 }
 
 .brand {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--ink-primary);
-  transition: transform var(--transition-fast);
+  display: flex;
+  align-items: center;
+  user-select: none;
 }
 
-.brand:hover {
+.brand-logo-img {
+  height: 22px;
+  max-height: 26px;
+  width: auto;
+  max-width: 190px;
+  object-fit: contain;
+  display: block;
+  transition: filter var(--transition-smooth), transform var(--transition-fast);
+}
+
+.brand-logo-img:hover {
   transform: translateX(1px);
+}
+
+[data-theme="dark"] .brand-logo-img {
+  filter: invert(1) brightness(1.05);
 }
 
 .header-right {
