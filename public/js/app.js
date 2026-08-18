@@ -626,7 +626,7 @@
           </div>
         ` : ''}
       </div>
-      <span class="slot-capacity-pill ${isBookedByMe ? 'mine' : ''}">${isBookedByMe ? 'You' : `${bookedCount}/${state.maxCapacity}`}</span>
+      <span class="slot-capacity-pill ${isBookedByMe ? 'mine' : ''}">${bookedCount}/${state.maxCapacity}</span>
     `;
 
     if (state.isMobileView) {
@@ -651,7 +651,7 @@
         const tag = document.createElement('span');
         tag.className = `attendee-tag ${isMe ? 'is-me' : ''}`;
         tag.style.borderLeftColor = color;
-        tag.textContent = isMe ? 'You' : b.member_name.split(' ')[0];
+        tag.textContent = b.member_name.split(' ')[0];
         tag.title = b.member_name;
         attendeesWrap.appendChild(tag);
       });
