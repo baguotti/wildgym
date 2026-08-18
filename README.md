@@ -80,11 +80,15 @@ PORT=8080 GYM_CAPACITY=5 START_HOUR=7 END_HOUR=22 python3 server.py
 ```
 .
 ├── server.py              # Zero-dependency Python server (API + SQLite + Static files)
-├── gym.db                 # Auto-generated SQLite database
+├── gym.db                 # Auto-generated SQLite database (git-ignored)
 ├── public/                # Web frontend assets
 │   ├── index.html         # HTML5 UI structure
 │   ├── style.css          # Modern CSS (dark/light mode, mobile-first design)
-│   └── app.js             # Vanilla JS reactive client logic
+│   ├── app.js             # Vanilla JS reactive client logic
+│   ├── logo.png           # Transparent brand logo (light mode)
+│   ├── logo.webp          # High performance WebP logo
+│   ├── logo-dark.png      # Transparent brand logo (dark mode)
+│   └── logo-dark.webp     # High performance dark WebP logo
 ├── Dockerfile             # Alpine-based lightweight container
 ├── docker-compose.yml     # Containerized deployment config
 ├── run.sh                 # Quick launch script
