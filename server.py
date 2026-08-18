@@ -18,11 +18,11 @@ DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "gym
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "public")
 
 DEFAULT_SETTINGS = {
-    "max_capacity_per_slot": int(os.environ.get("GYM_CAPACITY", 4)),
+    "max_capacity_per_slot": int(os.environ.get("GYM_CAPACITY", 3)),
     "start_hour": int(os.environ.get("START_HOUR", 6)),   # 06:00
     "end_hour": int(os.environ.get("END_HOUR", 21)),       # 21:00
     "slot_duration_mins": 60,
-    "gym_name": os.environ.get("GYM_NAME", "Office Gym")
+    "gym_name": os.environ.get("GYM_NAME", "Wild Island Gym")
 }
 
 
@@ -68,6 +68,17 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(date)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_bookings_member ON bookings(member_id)")
 
+        # Rules table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS rules (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category TEXT NOT NULL,
+                title TEXT NOT NULL,
+                subtitle TEXT NOT NULL,
+                sort_order INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+
         # Seed initial sample members if table is empty
         cursor.execute("SELECT COUNT(*) as count FROM members")
         if cursor.fetchone()["count"] == 0:
@@ -83,6 +94,21 @@ def init_db():
             cursor.executemany(
                 "INSERT INTO members (name, email) VALUES (?, ?)",
                 sample_members
+            )
+
+        # Seed default rules if table is empty
+        cursor.execute("SELECT COUNT(*) as count FROM rules")
+        if cursor.fetchone()["count"] == 0:
+            default_rules = [
+                ("Capacity", "3 people max per slot", "2 at the same time is highly recommended for optimal space and comfort.", 0),
+                ("Bookings", "Book ahead & cancel if not attending", "Please release your spot promptly so colleagues can book.", 1),
+                ("Hygiene", "Wipe down equipment after use", "Use sanitizing spray and bring a personal gym towel.", 2),
+                ("Equipment", "Re-rack weights & clean up space", "Return all dumbbells, bands, and mats to their proper racks.", 3),
+                ("Footwear", "Clean indoor training shoes only", "No outdoor muddy or street footwear on workout mats.", 4)
+            ]
+            cursor.executemany(
+                "INSERT INTO rules (category, title, subtitle, sort_order) VALUES (?, ?, ?, ?)",
+                default_rules
             )
         conn.commit()
 
@@ -125,7 +151,7 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
         """Handle CORS pre-flight requests."""
         self.send_response(HTTPStatus.NO_CONTENT)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
@@ -138,6 +164,14 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
         # API: Get gym config
         if path == "/api/config":
             return self._send_json(DEFAULT_SETTINGS)
+
+        # API: Get rules
+        if path == "/api/rules":
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id, category, title, subtitle, sort_order FROM rules ORDER BY sort_order ASC, id ASC")
+                rules = [dict(row) for row in cursor.fetchall()]
+                return self._send_json({"rules": rules})
 
         # API: List members
         if path == "/api/members":
@@ -220,14 +254,72 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
         # Fallback to static file server (public/)
         return super().do_GET()
 
-    def do_POST(self):
-        """Handle POST requests for creating bookings and members."""
+    def do_PUT(self):
+        """Handle PUT requests for updating rules."""
         parsed_url = urlparse(self.path)
         path = parsed_url.path.rstrip("/")
         data = self._read_json_body()
 
         if data is None:
             return self._send_error("Invalid JSON payload", HTTPStatus.BAD_REQUEST)
+
+        # API: Save/replace all rules
+        if path == "/api/rules":
+            rules = data.get("rules", [])
+            if not isinstance(rules, list):
+                return self._send_error("Expected rules list", HTTPStatus.BAD_REQUEST)
+
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM rules")
+                for i, r in enumerate(rules):
+                    cat = (r.get("category") or "Rule").strip()
+                    title = (r.get("title") or "").strip()
+                    sub = (r.get("subtitle") or "").strip()
+                    if title:
+                        cursor.execute(
+                            "INSERT INTO rules (category, title, subtitle, sort_order) VALUES (?, ?, ?, ?)",
+                            (cat, title, sub, i)
+                        )
+                conn.commit()
+                cursor.execute("SELECT id, category, title, subtitle, sort_order FROM rules ORDER BY sort_order ASC, id ASC")
+                updated_rules = [dict(row) for row in cursor.fetchall()]
+                return self._send_json({"message": "Rules updated successfully", "rules": updated_rules})
+
+        return self._send_error("Endpoint not found", HTTPStatus.NOT_FOUND)
+
+    def do_POST(self):
+        """Handle POST requests for creating bookings, members, and rules."""
+        parsed_url = urlparse(self.path)
+        path = parsed_url.path.rstrip("/")
+        data = self._read_json_body()
+
+        if data is None:
+            return self._send_error("Invalid JSON payload", HTTPStatus.BAD_REQUEST)
+
+        # API: Add rule
+        if path == "/api/rules":
+            category = (data.get("category") or "Rule").strip()
+            title = (data.get("title") or "").strip()
+            subtitle = (data.get("subtitle") or "").strip()
+
+            if not title:
+                return self._send_error("Rule title is required", HTTPStatus.BAD_REQUEST)
+
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) as count FROM rules")
+                next_order = cursor.fetchone()["count"]
+                cursor.execute(
+                    "INSERT INTO rules (category, title, subtitle, sort_order) VALUES (?, ?, ?, ?)",
+                    (category, title, subtitle, next_order)
+                )
+                conn.commit()
+                new_id = cursor.lastrowid
+                return self._send_json({
+                    "message": "Rule added successfully",
+                    "rule": {"id": new_id, "category": category, "title": title, "subtitle": subtitle, "sort_order": next_order}
+                }, HTTPStatus.CREATED)
 
         # API: Add member
         if path == "/api/members":
@@ -336,9 +428,25 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
         return self._send_error("Endpoint not found", HTTPStatus.NOT_FOUND)
 
     def do_DELETE(self):
-        """Handle DELETE requests for removing members and bookings."""
+        """Handle DELETE requests for removing members, bookings, and rules."""
         parsed_url = urlparse(self.path)
         path = parsed_url.path.rstrip("/")
+
+        # API: Delete rule by ID -> /api/rules/<id>
+        if path.startswith("/api/rules/"):
+            try:
+                rule_id = int(path.split("/")[-1])
+            except ValueError:
+                return self._send_error("Invalid rule ID", HTTPStatus.BAD_REQUEST)
+
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM rules WHERE id = ?", (rule_id,))
+                conn.commit()
+                return self._send_json({
+                    "message": "Rule deleted successfully",
+                    "deleted_id": rule_id
+                })
 
         # API: Cancel booking by ID -> /api/bookings/<id>
         if path.startswith("/api/bookings/"):

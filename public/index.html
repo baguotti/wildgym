@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Gym</title>
-  <meta name="description" content="Office Gym Booking">
+  <title>Wild Island Gym</title>
+  <meta name="description" content="Wild Island Gym Booking">
   
   <!-- Sans-Serif Font: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23000'/><text x='50%' y='68%' font-size='60' text-anchor='middle' fill='%23fff' font-family='sans-serif' font-weight='bold'>G</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23222'/><text x='50%' y='69%' font-size='56' text-anchor='middle' fill='%23fff' font-family='sans-serif' font-weight='bold'>W</text></svg>">
 </head>
 <body>
   <div id="app" class="app-container">
@@ -29,6 +29,9 @@
             <option value="" disabled selected>Loading...</option>
           </select>
         </div>
+
+        <!-- Rules Button -->
+        <button id="btn-rules" class="btn btn-sm" title="Gym Rules">Rules</button>
 
         <!-- Roster Button -->
         <button id="btn-manage-members" class="btn btn-sm" title="Manage Roster">Roster</button>
@@ -53,12 +56,6 @@
         <span id="my-bookings-count-badge" class="my-count-pill">
           <span id="my-bookings-text">0 booked</span>
         </span>
-      </div>
-
-      <div class="legend-compact">
-        <span class="dot dot-open"></span> Open
-        <span class="dot dot-mine"></span> You
-        <span class="dot dot-full"></span> Full
       </div>
     </div>
 
@@ -91,6 +88,42 @@
 
           <div id="members-list" class="members-list">
             <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gym Rules Modal -->
+    <div id="rules-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+      <div class="modal-card rules-card">
+        <div class="modal-header">
+          <h3>Gym Rules & Guidelines</h3>
+          <div class="modal-header-actions">
+            <button id="btn-edit-rules" class="btn btn-sm" title="Edit Rules">Edit</button>
+            <button id="btn-close-rules-modal" class="btn-close" aria-label="Close">&times;</button>
+          </div>
+        </div>
+
+        <div class="modal-body rules-body">
+          <!-- View Mode -->
+          <div id="rules-view-container">
+            <div id="rules-list" class="rules-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Edit Mode -->
+          <div id="rules-edit-container" class="hidden">
+            <div id="rules-edit-list" class="rules-edit-list">
+              <!-- Dynamically populated edit rows -->
+            </div>
+            <div class="rules-edit-toolbar">
+              <button id="btn-add-rule-row" class="btn btn-sm" type="button">+ Add Rule</button>
+              <div class="rules-edit-actions">
+                <button id="btn-cancel-rules-edit" class="btn btn-sm" type="button">Cancel</button>
+                <button id="btn-save-rules" class="btn btn-sm btn-solid" type="button">Save</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -62,10 +62,10 @@ Visit **[http://localhost:3000](http://localhost:3000)** on your computer or pho
 | Variable | Default | Description |
 | :--- | :--- | :--- |
 | `PORT` | `3000` | HTTP port the server listens on |
-| `GYM_CAPACITY` | `4` | Max number of people allowed per 1-hour slot |
+| `GYM_CAPACITY` | `3` | Max number of people allowed per 1-hour slot |
 | `START_HOUR` | `6` | Gym opening hour (06:00) |
 | `END_HOUR` | `21` | Gym closing hour (21:00) |
-| `GYM_NAME` | `Office Gym` | Title shown in the header |
+| `GYM_NAME` | `Wild Island Gym` | Title shown in the header |
 | `DB_PATH` | `gym.db` | Path to SQLite database file |
 
 Example custom startup:

@@ -10,15 +10,17 @@
     activeMemberId: null,
     currentWeekStart: getMonday(new Date()),
     calendarData: {},
-    maxCapacity: 4,
+    maxCapacity: 3,
     startHour: 6,
     endHour: 21,
     selectedMobileDayIndex: 0,
-    isMobileView: window.innerWidth <= 800
+    isMobileView: window.innerWidth <= 800,
+    rules: []
   };
 
   const elements = {
     memberSelect: document.getElementById('active-member-select'),
+    btnRules: document.getElementById('btn-rules'),
     btnManageMembers: document.getElementById('btn-manage-members'),
     btnThemeToggle: document.getElementById('btn-theme-toggle'),
     themeIcon: document.getElementById('theme-icon'),
@@ -31,6 +33,16 @@
     calendarGrid: document.getElementById('calendar-grid'),
     membersModal: document.getElementById('members-modal'),
     btnCloseModal: document.getElementById('btn-close-modal'),
+    rulesModal: document.getElementById('rules-modal'),
+    btnCloseRulesModal: document.getElementById('btn-close-rules-modal'),
+    btnEditRules: document.getElementById('btn-edit-rules'),
+    rulesViewContainer: document.getElementById('rules-view-container'),
+    rulesEditContainer: document.getElementById('rules-edit-container'),
+    rulesList: document.getElementById('rules-list'),
+    rulesEditList: document.getElementById('rules-edit-list'),
+    btnAddRuleRow: document.getElementById('btn-add-rule-row'),
+    btnCancelRulesEdit: document.getElementById('btn-cancel-rules-edit'),
+    btnSaveRules: document.getElementById('btn-save-rules'),
     formAddMember: document.getElementById('form-add-member'),
     inputMemberName: document.getElementById('input-member-name'),
     inputMemberEmail: document.getElementById('input-member-email'),
@@ -64,24 +76,24 @@
 
   const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  // Desaturated Muted Pastel Palette (Calm, understated, elegant)
+  // Desaturated Muted Pastel Palette (Washed-out, understated, stylish)
   const PASTEL_COLORS = [
-    '#9EABA2', // Muted Sage
-    '#B89E9E', // Muted Dusty Rose
-    '#9AA6B8', // Muted Slate Blue
-    '#B8A894', // Muted Warm Sand
-    '#A89CB5', // Muted Soft Mauve
-    '#8EA8A0', // Muted Seafoam
-    '#B89688', // Muted Terracotta Clay
-    '#8FA4B8', // Muted Calm Denim
-    '#ADA98E', // Muted Dry Olive
-    '#B594A8', // Muted Plum
-    '#8FA89A', // Muted Eucalyptus
-    '#A692B8', // Muted Lavender Dusk
-    '#B89F8E', // Muted Apricot Ash
-    '#8FA8B5', // Muted Storm Blue
-    '#A8B59E', // Muted Moss
-    '#B59EA8'  // Muted Heather
+    '#8E9E94', // Washed Sage
+    '#AC8F8F', // Washed Dusty Rose
+    '#8F9AAC', // Washed Slate
+    '#ABA08C', // Washed Sand
+    '#9D91A8', // Washed Mauve
+    '#849E97', // Washed Seafoam
+    '#AB8B80', // Washed Terracotta
+    '#869AA8', // Washed Denim
+    '#9E9A82', // Washed Olive
+    '#A6889B', // Washed Plum
+    '#859B8E', // Washed Eucalyptus
+    '#998BA6', // Washed Lavender
+    '#A89384', // Washed Apricot
+    '#829AAB', // Washed Storm
+    '#99A68F', // Washed Moss
+    '#A6929D'  // Washed Heather
   ];
 
   function getMemberColor(memberId, name) {
@@ -236,6 +248,101 @@
     } catch (e) {
       showToast('Network error');
     }
+  }
+
+  async function fetchRules() {
+    try {
+      const res = await fetch('/api/rules');
+      if (res.ok) {
+        const data = await res.json();
+        state.rules = data.rules || [];
+        renderRulesView();
+      }
+    } catch (e) {
+      console.error('Failed to fetch rules', e);
+    }
+  }
+
+  async function saveRules(rulesArray) {
+    try {
+      const res = await fetch('/api/rules', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rules: rulesArray })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        state.rules = data.rules || rulesArray;
+        renderRulesView();
+        toggleRulesEditMode(false);
+        showToast('Rules updated');
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Failed to save rules');
+      }
+    } catch (e) {
+      showToast('Network error');
+    }
+  }
+
+  function renderRulesView() {
+    elements.rulesList.innerHTML = '';
+    if (state.rules.length === 0) {
+      elements.rulesList.innerHTML = '<p style="color:var(--ink-muted); padding:8px 0;">No rules set.</p>';
+      return;
+    }
+
+    state.rules.forEach((r) => {
+      const item = document.createElement('div');
+      item.className = 'rule-item';
+      item.innerHTML = `
+        <span class="rule-tag">${escapeHTML(r.category || 'Rule')}</span>
+        <div class="rule-content">
+          <div class="rule-title">${escapeHTML(r.title)}</div>
+          ${r.subtitle ? `<div class="rule-sub">${escapeHTML(r.subtitle)}</div>` : ''}
+        </div>
+      `;
+      elements.rulesList.appendChild(item);
+    });
+  }
+
+  function toggleRulesEditMode(isEdit) {
+    if (isEdit) {
+      elements.rulesViewContainer.classList.add('hidden');
+      elements.rulesEditContainer.classList.remove('hidden');
+      elements.btnEditRules.classList.add('hidden');
+      renderRulesEdit();
+    } else {
+      elements.rulesViewContainer.classList.remove('hidden');
+      elements.rulesEditContainer.classList.add('hidden');
+      elements.btnEditRules.classList.remove('hidden');
+    }
+  }
+
+  function renderRulesEdit() {
+    elements.rulesEditList.innerHTML = '';
+    state.rules.forEach((r) => {
+      elements.rulesEditList.appendChild(createRuleEditRow(r.category, r.title, r.subtitle));
+    });
+    if (state.rules.length === 0) {
+      elements.rulesEditList.appendChild(createRuleEditRow('Rule', '', ''));
+    }
+  }
+
+  function createRuleEditRow(category = 'Rule', title = '', subtitle = '') {
+    const row = document.createElement('div');
+    row.className = 'rule-edit-row';
+    row.innerHTML = `
+      <div class="rule-edit-fields">
+        <div class="rule-edit-top">
+          <input type="text" class="rule-edit-cat" placeholder="Tag" value="${escapeHTML(category)}" maxlength="25">
+          <input type="text" class="rule-edit-title" placeholder="Rule headline" value="${escapeHTML(title)}" maxlength="100">
+        </div>
+        <input type="text" class="rule-edit-sub" placeholder="Description / details (optional)" value="${escapeHTML(subtitle)}" maxlength="200">
+      </div>
+      <button class="btn-delete-rule" type="button" title="Delete rule">&times;</button>
+    `;
+    return row;
   }
 
   // Rendering
@@ -557,8 +664,7 @@
   }
 
   function initTheme() {
-    const savedTheme = localStorage.getItem('gym_theme') || 
-      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const savedTheme = localStorage.getItem('gym_theme') || 'light';
     setTheme(savedTheme);
   }
 
@@ -601,6 +707,65 @@
     elements.btnNextWeek.addEventListener('click', () => {
       state.currentWeekStart = addDays(state.currentWeekStart, 7);
       fetchCalendar();
+    });
+
+    elements.btnRules.addEventListener('click', () => {
+      toggleRulesEditMode(false);
+      elements.rulesModal.classList.remove('hidden');
+    });
+
+    elements.btnCloseRulesModal.addEventListener('click', () => {
+      elements.rulesModal.classList.add('hidden');
+    });
+
+    elements.rulesModal.addEventListener('click', (e) => {
+      if (e.target === elements.rulesModal) {
+        elements.rulesModal.classList.add('hidden');
+      }
+    });
+
+    elements.btnEditRules.addEventListener('click', () => {
+      toggleRulesEditMode(true);
+    });
+
+    elements.btnCancelRulesEdit.addEventListener('click', () => {
+      toggleRulesEditMode(false);
+    });
+
+    elements.btnAddRuleRow.addEventListener('click', () => {
+      const newRow = createRuleEditRow('Rule', '', '');
+      elements.rulesEditList.appendChild(newRow);
+      const titleInput = newRow.querySelector('.rule-edit-title');
+      if (titleInput) titleInput.focus();
+    });
+
+    elements.rulesEditList.addEventListener('click', (e) => {
+      if (e.target.classList.contains('btn-delete-rule')) {
+        const row = e.target.closest('.rule-edit-row');
+        if (row) row.remove();
+      }
+    });
+
+    elements.btnSaveRules.addEventListener('click', () => {
+      const rows = elements.rulesEditList.querySelectorAll('.rule-edit-row');
+      const updatedRules = [];
+      rows.forEach((row) => {
+        const cat = row.querySelector('.rule-edit-cat').value.trim();
+        const title = row.querySelector('.rule-edit-title').value.trim();
+        const sub = row.querySelector('.rule-edit-sub').value.trim();
+        if (title) {
+          updatedRules.push({
+            category: cat || 'Rule',
+            title: title,
+            subtitle: sub
+          });
+        }
+      });
+      if (updatedRules.length === 0) {
+        showToast('Please provide at least 1 rule');
+        return;
+      }
+      saveRules(updatedRules);
     });
 
     elements.btnManageMembers.addEventListener('click', () => {
@@ -660,6 +825,7 @@
     setupEventListeners();
     await fetchConfig();
     await fetchMembers();
+    await fetchRules();
     await fetchCalendar();
   }
 

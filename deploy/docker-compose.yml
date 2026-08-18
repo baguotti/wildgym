@@ -11,10 +11,10 @@ services:
       - "3000:3000"
     environment:
       - PORT=3000
-      - GYM_CAPACITY=4
+      - GYM_CAPACITY=3
       - START_HOUR=6
       - END_HOUR=21
-      - GYM_NAME=Office Gym
+      - GYM_NAME=Wild Island Gym
     volumes:
       - gym-data:/app/data
 

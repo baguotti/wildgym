@@ -9,7 +9,7 @@ COPY public/ ./public/
 # Environment defaults
 ENV PORT=3000
 ENV DB_PATH=/app/data/gym.db
-ENV GYM_CAPACITY=4
+ENV GYM_CAPACITY=3
 ENV START_HOUR=6
 ENV END_HOUR=21
 
