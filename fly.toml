@@ -1,0 +1,31 @@
+# Fly.io App Configuration for Wild Island Gym
+
+app = "wildgym-app"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "3000"
+  DB_PATH = "/app/data/gym.db"
+  GYM_NAME = "Wild Island Gym"
+  GYM_CAPACITY = "3"
+  START_HOUR = "6"
+  END_HOUR = "21"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[mounts]]
+  source = "gym_data"
+  destination = "/app/data"
+  initial_size = "1gb"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
