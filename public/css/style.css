@@ -99,7 +99,7 @@ body {
 .app-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 12px 16px 36px;
+  padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(36px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
 }
 
 /* ==========================================================================
@@ -1179,5 +1179,113 @@ body {
 
   .slot-time-mini {
     display: inline-block;
+  }
+}
+
+/* ==========================================================================
+   PWA & Mobile App Installation Styles
+   ========================================================================== */
+.btn-install {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--ink-primary);
+  color: var(--bg-page);
+  border: 1px solid var(--border-dark);
+  padding: 4px 9px;
+  font-weight: 600;
+  font-size: 0.72rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.btn-install:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.btn-install .install-icon {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* iOS Install Guidance Modal */
+.ios-install-card {
+  max-width: 380px;
+}
+
+.ios-install-desc {
+  font-size: 0.85rem;
+  color: var(--ink-secondary);
+  margin-bottom: 14px;
+  line-height: 1.45;
+}
+
+.ios-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ios-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--bg-subtle);
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-hairline);
+}
+
+.ios-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ink-primary);
+  color: var(--bg-page);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ios-step-text {
+  font-size: 0.82rem;
+  color: var(--ink-primary);
+  line-height: 1.35;
+}
+
+.ios-icon-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-base);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin: 0 2px;
+}
+
+.btn-block {
+  width: 100%;
+  padding: 8px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+/* Standalone PWA Mode (When launched from iOS/Android Home Screen) */
+@media (display-mode: standalone) {
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
+  }
+
+  #btn-install-app {
+    display: none !important;
   }
 }

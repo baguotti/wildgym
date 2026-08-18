@@ -49,7 +49,11 @@
     inputMemberEmail: document.getElementById('input-member-email'),
     membersList: document.getElementById('members-list'),
     membersCount: document.getElementById('members-count'),
-    toastContainer: document.getElementById('toast-container')
+    toastContainer: document.getElementById('toast-container'),
+    btnInstallApp: document.getElementById('btn-install-app'),
+    iosInstallModal: document.getElementById('ios-install-modal'),
+    btnCloseIosInstall: document.getElementById('btn-close-ios-install'),
+    btnGotItIos: document.getElementById('btn-got-it-ios')
   };
 
   // Date Helpers
@@ -870,6 +874,43 @@
       }
     });
 
+    if (elements.btnInstallApp) {
+      elements.btnInstallApp.addEventListener('click', async () => {
+        if (deferredInstallPrompt) {
+          deferredInstallPrompt.prompt();
+          const { outcome } = await deferredInstallPrompt.userChoice;
+          if (outcome === 'accepted') {
+            elements.btnInstallApp.classList.add('hidden');
+          }
+          deferredInstallPrompt = null;
+        } else if (isIOS()) {
+          if (elements.iosInstallModal) elements.iosInstallModal.classList.remove('hidden');
+        } else {
+          showToast('To install, use browser menu -> Add to Home screen');
+        }
+      });
+    }
+
+    if (elements.btnCloseIosInstall) {
+      elements.btnCloseIosInstall.addEventListener('click', () => {
+        if (elements.iosInstallModal) elements.iosInstallModal.classList.add('hidden');
+      });
+    }
+
+    if (elements.btnGotItIos) {
+      elements.btnGotItIos.addEventListener('click', () => {
+        if (elements.iosInstallModal) elements.iosInstallModal.classList.add('hidden');
+      });
+    }
+
+    if (elements.iosInstallModal) {
+      elements.iosInstallModal.addEventListener('click', (e) => {
+        if (e.target === elements.iosInstallModal) {
+          elements.iosInstallModal.classList.add('hidden');
+        }
+      });
+    }
+
     window.addEventListener('resize', () => {
       const isMobile = window.innerWidth <= 800;
       if (isMobile !== state.isMobileView) {
@@ -883,12 +924,97 @@
     }, 30000);
   }
 
+  // ==========================================================================
+  // PWA Service Worker & Seamless Auto-Updating
+  // ==========================================================================
+  let deferredInstallPrompt = null;
+  let swRegistration = null;
+
+  function isRunningStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true || 
+           document.referrer.includes('android-app://');
+  }
+
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  }
+
+  function initPWA() {
+    if (isRunningStandalone()) {
+      if (elements.btnInstallApp) elements.btnInstallApp.classList.add('hidden');
+    } else if (isIOS()) {
+      if (elements.btnInstallApp) elements.btnInstallApp.classList.remove('hidden');
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      if (!isRunningStandalone() && elements.btnInstallApp) {
+        elements.btnInstallApp.classList.remove('hidden');
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredInstallPrompt = null;
+      if (elements.btnInstallApp) elements.btnInstallApp.classList.add('hidden');
+      showToast('Wild Gym installed successfully!');
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+        .then((reg) => {
+          swRegistration = reg;
+          reg.update();
+
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+        })
+        .catch((err) => {
+          console.warn('[PWA] ServiceWorker registration failed:', err);
+        });
+
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          showToast('App updated to latest version');
+          setTimeout(() => {
+            fetchCalendar();
+            fetchRules();
+            fetchMembers();
+          }, 300);
+        }
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          if (swRegistration) swRegistration.update();
+          fetchCalendar();
+        }
+      });
+
+      setInterval(() => {
+        if (swRegistration) swRegistration.update();
+      }, 15 * 60 * 1000);
+    }
+  }
+
   async function init() {
     initTheme();
     const today = new Date();
     state.selectedMobileDayIndex = (today.getDay() + 6) % 7;
 
     setupEventListeners();
+    initPWA();
     await fetchConfig();
     await fetchMembers();
     await fetchRules();

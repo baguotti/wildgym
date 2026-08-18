@@ -122,6 +122,19 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=STATIC_DIR, **kwargs)
 
+    def end_headers(self):
+        """Inject appropriate PWA and caching headers for static assets."""
+        if hasattr(self, 'path'):
+            if self.path.startswith("/sw.js"):
+                self.send_header("Service-Worker-Allowed", "/")
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            elif self.path.startswith("/manifest.json") or self.path.endswith(".webmanifest"):
+                self.send_header("Content-Type", "application/manifest+json; charset=utf-8")
+                self.send_header("Cache-Control", "no-cache, must-revalidate")
+            elif self.path.endswith(".html") or self.path in ("/", ""):
+                self.send_header("Cache-Control", "no-cache, must-revalidate")
+        super().end_headers()
+
     def _send_json(self, data, status=HTTPStatus.OK):
         """Helper to send JSON response with standard CORS headers."""
         response_bytes = json.dumps(data, ensure_ascii=False).encode("utf-8")
