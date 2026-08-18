@@ -64,6 +64,38 @@
 
   const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+  // Desaturated Muted Pastel Palette (Calm, understated, elegant)
+  const PASTEL_COLORS = [
+    '#9EABA2', // Muted Sage
+    '#B89E9E', // Muted Dusty Rose
+    '#9AA6B8', // Muted Slate Blue
+    '#B8A894', // Muted Warm Sand
+    '#A89CB5', // Muted Soft Mauve
+    '#8EA8A0', // Muted Seafoam
+    '#B89688', // Muted Terracotta Clay
+    '#8FA4B8', // Muted Calm Denim
+    '#ADA98E', // Muted Dry Olive
+    '#B594A8', // Muted Plum
+    '#8FA89A', // Muted Eucalyptus
+    '#A692B8', // Muted Lavender Dusk
+    '#B89F8E', // Muted Apricot Ash
+    '#8FA8B5', // Muted Storm Blue
+    '#A8B59E', // Muted Moss
+    '#B59EA8'  // Muted Heather
+  ];
+
+  function getMemberColor(memberId, name) {
+    if (typeof memberId === 'number' && memberId > 0) {
+      return PASTEL_COLORS[(memberId - 1) % PASTEL_COLORS.length];
+    }
+    let hash = 0;
+    const str = String(name || '');
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return PASTEL_COLORS[Math.abs(hash) % PASTEL_COLORS.length];
+  }
+
   // API
   async function fetchConfig() {
     try {
@@ -256,8 +288,10 @@
     }
 
     state.members.forEach((m) => {
+      const color = getMemberColor(m.id, m.name);
       const item = document.createElement('div');
       item.className = 'member-item';
+      item.style.borderLeft = `2.5px solid ${color}`;
       item.innerHTML = `
         <span>${escapeHTML(m.name)}</span>
         <button class="btn-del" data-id="${m.id}" data-name="${escapeHTML(m.name)}">Del</button>
@@ -419,8 +453,10 @@
     if (bookings.length > 0) {
       bookings.forEach((b) => {
         const isMe = b.member_id === state.activeMemberId;
+        const color = getMemberColor(b.member_id, b.member_name);
         const tag = document.createElement('span');
         tag.className = `attendee-tag ${isMe ? 'is-me' : ''}`;
+        tag.style.borderLeftColor = color;
         tag.textContent = isMe ? 'You' : b.member_name.split(' ')[0];
         tag.title = b.member_name;
         attendeesWrap.appendChild(tag);

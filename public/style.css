@@ -576,9 +576,10 @@ body {
   font-size: 0.72rem;
   font-weight: 500;
   letter-spacing: -0.01em;
-  padding: 1px 6px;
+  padding: 1px 5px 1px 5px;
   background: var(--attendee-bg);
   border: 1px solid var(--attendee-border);
+  border-left-width: 2.5px;
   border-radius: var(--radius);
   color: var(--attendee-text);
   line-height: 1.35;
