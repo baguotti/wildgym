@@ -96,20 +96,23 @@ def init_db():
                 sample_members
             )
 
-        # Seed default rules if table is empty
-        cursor.execute("SELECT COUNT(*) as count FROM rules")
-        if cursor.fetchone()["count"] == 0:
-            default_rules = [
-                ("Capacity", "3 people max per slot", "2 at the same time is highly recommended for optimal space and comfort.", 0),
-                ("Bookings", "Book ahead & cancel if not attending", "Please release your spot promptly so colleagues can book.", 1),
-                ("Hygiene", "Wipe down equipment after use", "Use sanitizing spray and bring a personal gym towel.", 2),
-                ("Equipment", "Re-rack weights & clean up space", "Return all dumbbells, bands, and mats to their proper racks.", 3),
-                ("Footwear", "Clean indoor training shoes only", "No outdoor muddy or street footwear on workout mats.", 4)
-            ]
-            cursor.executemany(
-                "INSERT INTO rules (category, title, subtitle, sort_order) VALUES (?, ?, ?, ?)",
-                default_rules
+        # Hour types table (MALE / FEMALE / MIXED)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS hour_types (
+                time_slot TEXT PRIMARY KEY,
+                slot_type TEXT NOT NULL DEFAULT 'MIXED'
             )
+        """)
+
+        # Initialize all operating hours with default 'MIXED' if empty
+        cursor.execute("SELECT COUNT(*) as count FROM hour_types")
+        if cursor.fetchone()["count"] == 0:
+            default_hours = []
+            for h in range(DEFAULT_SETTINGS["start_hour"], DEFAULT_SETTINGS["end_hour"] + 1):
+                slot_str = f"{h:02d}:00"
+                default_hours.append((slot_str, "MIXED"))
+            cursor.executemany("INSERT INTO hour_types (time_slot, slot_type) VALUES (?, ?)", default_hours)
+
         conn.commit()
 
 
@@ -173,6 +176,18 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
                 rules = [dict(row) for row in cursor.fetchall()]
                 return self._send_json({"rules": rules})
 
+        # API: Get hour types
+        if path == "/api/hour-types":
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT time_slot, slot_type FROM hour_types ORDER BY time_slot ASC")
+                hour_types = {row["time_slot"]: row["slot_type"] for row in cursor.fetchall()}
+                for h in range(DEFAULT_SETTINGS["start_hour"], DEFAULT_SETTINGS["end_hour"] + 1):
+                    slot_str = f"{h:02d}:00"
+                    if slot_str not in hour_types:
+                        hour_types[slot_str] = "MIXED"
+                return self._send_json({"hour_types": hour_types})
+
         # API: List members
         if path == "/api/members":
             with get_db_connection() as conn:
@@ -226,11 +241,20 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
                         "booked_at": row["booked_at"]
                     })
 
+                # Fetch hour types
+                cursor.execute("SELECT time_slot, slot_type FROM hour_types")
+                hour_types = {row["time_slot"]: row["slot_type"] for row in cursor.fetchall()}
+                for h in range(DEFAULT_SETTINGS["start_hour"], DEFAULT_SETTINGS["end_hour"] + 1):
+                    slot_str = f"{h:02d}:00"
+                    if slot_str not in hour_types:
+                        hour_types[slot_str] = "MIXED"
+
                 return self._send_json({
                     "start_date": start_date,
                     "end_date": end_date,
                     "max_capacity": DEFAULT_SETTINGS["max_capacity_per_slot"],
-                    "calendar": calendar
+                    "calendar": calendar,
+                    "hour_types": hour_types
                 })
 
         # API: Get upcoming bookings for a specific member
@@ -286,16 +310,52 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
                 updated_rules = [dict(row) for row in cursor.fetchall()]
                 return self._send_json({"message": "Rules updated successfully", "rules": updated_rules})
 
+        # API: Update hour type (PUT)
+        if path == "/api/hour-types":
+            time_slot = (data.get("time_slot") or "").strip()
+            slot_type = (data.get("slot_type") or "").strip().upper()
+            if slot_type not in ("MALE", "FEMALE", "MIXED"):
+                return self._send_error("slot_type must be MALE, FEMALE, or MIXED", HTTPStatus.BAD_REQUEST)
+            if not time_slot:
+                return self._send_error("time_slot is required", HTTPStatus.BAD_REQUEST)
+
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO hour_types (time_slot, slot_type) VALUES (?, ?) ON CONFLICT(time_slot) DO UPDATE SET slot_type = excluded.slot_type",
+                    (time_slot, slot_type)
+                )
+                conn.commit()
+                return self._send_json({"message": "Hour type updated", "time_slot": time_slot, "slot_type": slot_type})
+
         return self._send_error("Endpoint not found", HTTPStatus.NOT_FOUND)
 
     def do_POST(self):
-        """Handle POST requests for creating bookings, members, and rules."""
+        """Handle POST requests for creating bookings, members, rules, and hour types."""
         parsed_url = urlparse(self.path)
         path = parsed_url.path.rstrip("/")
         data = self._read_json_body()
 
         if data is None:
             return self._send_error("Invalid JSON payload", HTTPStatus.BAD_REQUEST)
+
+        # API: Update hour type (POST)
+        if path == "/api/hour-types":
+            time_slot = (data.get("time_slot") or "").strip()
+            slot_type = (data.get("slot_type") or "").strip().upper()
+            if slot_type not in ("MALE", "FEMALE", "MIXED"):
+                return self._send_error("slot_type must be MALE, FEMALE, or MIXED", HTTPStatus.BAD_REQUEST)
+            if not time_slot:
+                return self._send_error("time_slot is required", HTTPStatus.BAD_REQUEST)
+
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO hour_types (time_slot, slot_type) VALUES (?, ?) ON CONFLICT(time_slot) DO UPDATE SET slot_type = excluded.slot_type",
+                    (time_slot, slot_type)
+                )
+                conn.commit()
+                return self._send_json({"message": "Hour type updated", "time_slot": time_slot, "slot_type": slot_type})
 
         # API: Add rule
         if path == "/api/rules":

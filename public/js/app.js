@@ -15,7 +15,8 @@
     endHour: 21,
     selectedMobileDayIndex: 0,
     isMobileView: window.innerWidth <= 800,
-    rules: []
+    rules: [],
+    hourTypes: {}
   };
 
   const elements = {
@@ -146,11 +147,38 @@
       if (res.ok) {
         const data = await res.json();
         state.calendarData = data.calendar || {};
+        state.hourTypes = data.hour_types || {};
         renderCalendar();
         updateMyBookingsSummary();
       }
     } catch (e) {
       showToast('Error loading schedule');
+    }
+  }
+
+  async function updateHourType(timeSlot, slotType) {
+    state.hourTypes[timeSlot] = slotType;
+    renderCalendar();
+
+    try {
+      const res = await fetch('/api/hour-types', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          time_slot: timeSlot,
+          slot_type: slotType
+        })
+      });
+
+      if (res.ok) {
+        showToast(`${timeSlot} → ${slotType}`);
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Failed to update hour');
+        await fetchCalendar();
+      }
+    } catch (e) {
+      showToast('Network error');
     }
   }
 
@@ -468,9 +496,10 @@
       const isBooked = bookingsInSlot.some(b => b.member_id === state.activeMemberId);
       const isFull = bookingsInSlot.length >= state.maxCapacity;
       const hasAttendees = bookingsInSlot.length > 0;
+      const hourType = state.hourTypes[timeSlot] || 'MIXED';
       
       const cell = document.createElement('div');
-      let cellClasses = ['slot-cell'];
+      let cellClasses = ['slot-cell', `hour-type-${hourType.toLowerCase()}`];
       if (isBooked) cellClasses.push('is-booked');
       else if (isFull) cellClasses.push('is-full');
       else if (hasAttendees) cellClasses.push('has-attendees');
@@ -505,10 +534,25 @@
     for (let hour = state.startHour; hour <= state.endHour; hour++) {
       const timeSlot = `${String(hour).padStart(2, '0')}:00`;
       const nextHourStr = `${String(hour + 1).padStart(2, '0')}:00`;
+      const hourType = state.hourTypes[timeSlot] || 'MIXED';
 
       const timeGutter = document.createElement('div');
-      timeGutter.className = 'time-gutter';
-      timeGutter.textContent = timeSlot;
+      timeGutter.className = `time-gutter has-type type-${hourType.toLowerCase()}`;
+      timeGutter.innerHTML = `
+        <span class="time-label">${timeSlot}</span>
+        <div class="hour-type-select-wrap">
+          <select class="hour-type-select type-${hourType.toLowerCase()}" data-time-slot="${timeSlot}" title="Category for ${timeSlot}">
+            <option value="MIXED" ${hourType === 'MIXED' ? 'selected' : ''}>Mixed</option>
+            <option value="MALE" ${hourType === 'MALE' ? 'selected' : ''}>Male</option>
+            <option value="FEMALE" ${hourType === 'FEMALE' ? 'selected' : ''}>Female</option>
+          </select>
+        </div>
+      `;
+
+      const select = timeGutter.querySelector('.hour-type-select');
+      select.addEventListener('change', (e) => {
+        updateHourType(timeSlot, e.target.value);
+      });
       elements.calendarGrid.appendChild(timeGutter);
 
       for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
@@ -540,6 +584,7 @@
 
     const bookedCount = bookings.length;
     const isFull = bookedCount >= state.maxCapacity;
+    const hourType = state.hourTypes[timeSlot] || 'MIXED';
 
     const myBooking = bookings.find((b) => b.member_id === state.activeMemberId);
     const isBookedByMe = !!myBooking;
@@ -548,9 +593,30 @@
     const topRow = document.createElement('div');
     topRow.className = 'slot-top-row';
     topRow.innerHTML = `
-      <span class="slot-time-mini">${displayTime}</span>
+      <div class="slot-top-left">
+        <span class="slot-time-mini">${displayTime}</span>
+        ${state.isMobileView ? `
+          <div class="hour-type-select-wrap">
+            <select class="hour-type-select type-${hourType.toLowerCase()}" data-time-slot="${timeSlot}" title="Category for ${timeSlot}">
+              <option value="MIXED" ${hourType === 'MIXED' ? 'selected' : ''}>Mixed</option>
+              <option value="MALE" ${hourType === 'MALE' ? 'selected' : ''}>Male</option>
+              <option value="FEMALE" ${hourType === 'FEMALE' ? 'selected' : ''}>Female</option>
+            </select>
+          </div>
+        ` : ''}
+      </div>
       <span class="slot-capacity-pill ${isBookedByMe ? 'mine' : ''}">${isBookedByMe ? 'You' : `${bookedCount}/${state.maxCapacity}`}</span>
     `;
+
+    if (state.isMobileView) {
+      const selectMobile = topRow.querySelector('.hour-type-select');
+      if (selectMobile) {
+        selectMobile.addEventListener('change', (e) => {
+          updateHourType(timeSlot, e.target.value);
+        });
+      }
+    }
+
     card.appendChild(topRow);
 
     // Attendees list
