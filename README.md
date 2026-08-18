@@ -24,9 +24,9 @@ A lightweight, clean, and mobile-friendly self-hosted web application for managi
 ```bash
 python3 server.py
 ```
-Or use the helper script:
+Or use the launch script:
 ```bash
-./run.sh
+./scripts/run.sh
 ```
 
 ### 2. Open in Browser
@@ -49,9 +49,9 @@ Visit **[http://localhost:3000](http://localhost:3000)** on your computer or pho
 3. (Recommended) Set up Nginx or Caddy reverse proxy to provide HTTPS/SSL.
 
 ### Option B: Docker / Docker Compose
-1. Launch the container:
+1. Launch the container using the compose configuration:
    ```bash
-   docker-compose up -d
+   docker-compose -f deploy/docker-compose.yml up -d
    ```
 2. The database `gym.db` will persist in the Docker volume automatically across restarts and updates.
 
@@ -79,19 +79,26 @@ PORT=8080 GYM_CAPACITY=5 START_HOUR=7 END_HOUR=22 python3 server.py
 
 ```
 .
-├── server.py              # Zero-dependency Python server (API + SQLite + Static files)
-├── gym.db                 # Auto-generated SQLite database (git-ignored)
-├── public/                # Web frontend assets
-│   ├── index.html         # HTML5 UI structure
-│   ├── style.css          # Modern CSS (dark/light mode, mobile-first design)
-│   ├── app.js             # Vanilla JS reactive client logic
-│   ├── logo.png           # Transparent brand logo (light mode)
-│   ├── logo.webp          # High performance WebP logo
-│   ├── logo-dark.png      # Transparent brand logo (dark mode)
-│   └── logo-dark.webp     # High performance dark WebP logo
-├── Dockerfile             # Alpine-based lightweight container
-├── docker-compose.yml     # Containerized deployment config
-├── run.sh                 # Quick launch script
-├── IMPLEMENTATION_PLAN.md # Detailed specification document
-└── README.md              # Documentation
+├── server.py                 # Zero-dependency Python backend (API + SQLite + Static files)
+├── gym.db                    # Auto-generated SQLite database (git-ignored)
+├── public/                   # Frontend assets
+│   ├── index.html            # Main HTML5 entry point
+│   ├── css/
+│   │   └── style.css         # Modern styling & design system
+│   ├── js/
+│   │   └── app.js            # Reactive vanilla JS application
+│   └── assets/
+│       └── img/              # Brand logos & web graphics
+│           ├── logo.png
+│           ├── logo.webp
+│           ├── logo-dark.png
+│           └── logo-dark.webp
+├── deploy/                   # Deployment & container configurations
+│   ├── Dockerfile
+│   └── docker-compose.yml
+├── docs/                     # Specifications & project documentation
+│   └── IMPLEMENTATION_PLAN.md
+├── scripts/                  # Shell helper & operational scripts
+│   └── run.sh
+└── README.md                 # Project guide
 ```

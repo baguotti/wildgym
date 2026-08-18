@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   gym-booking:
-    build: .
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
     container_name: office_gym_booking
     restart: unless-stopped
     ports:
