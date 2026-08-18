@@ -1,0 +1,14 @@
+# Database
+*.db
+*.db-wal
+*.db-shm
+gym.db
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Logs & temp
+*.log
+data/
+.DS_Store

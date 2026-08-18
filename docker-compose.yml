@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  gym-booking:
+    build: .
+    container_name: office_gym_booking
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - GYM_CAPACITY=4
+      - START_HOUR=6
+      - END_HOUR=21
+      - GYM_NAME=Office Gym
+    volumes:
+      - gym-data:/app/data
+
+volumes:
+  gym-data:
+    driver: local
