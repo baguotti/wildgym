@@ -616,6 +616,33 @@ body {
   background-color: var(--slot-full-bg);
 }
 
+/* Past / Ended Time Slot State */
+.slot-cell.is-past {
+  background-color: var(--bg-subtle) !important;
+  opacity: 0.44;
+  filter: grayscale(0.85);
+  cursor: default;
+}
+
+.slot-cell.is-past:hover {
+  background-color: var(--bg-subtle) !important;
+  filter: grayscale(0.85);
+}
+
+[data-theme="dark"] .slot-cell.is-past {
+  background-color: #171715 !important;
+  opacity: 0.32;
+  filter: grayscale(0.92);
+}
+
+.slot-cell.is-past .slot-btn.btn-past {
+  background: transparent;
+  color: var(--ink-muted);
+  border-color: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+
 /* Slot Card */
 .slot-card {
   height: 100%;

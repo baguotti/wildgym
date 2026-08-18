@@ -447,10 +447,12 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
                         f"Time slot out of gym operating hours ({DEFAULT_SETTINGS['start_hour']:02d}:00 - {DEFAULT_SETTINGS['end_hour']:02d}:00)",
                         HTTPStatus.BAD_REQUEST
                     )
-                # Check same-day past hour
-                now = datetime.datetime.now()
-                if booking_date == today and hour < now.hour:
-                    return self._send_error("Cannot book past time slots for today", HTTPStatus.BAD_REQUEST)
+                # Check if slot has already ended
+                slot_minute = int(time_slot.split(":")[1]) if ":" in time_slot else 0
+                slot_dt = datetime.datetime.combine(booking_date, datetime.time(hour, slot_minute))
+                slot_end_dt = slot_dt + datetime.timedelta(minutes=DEFAULT_SETTINGS.get("slot_duration_mins", 60))
+                if datetime.datetime.now() >= slot_end_dt:
+                    return self._send_error("Cannot book past time slots", HTTPStatus.BAD_REQUEST)
             except Exception:
                 return self._send_error("Invalid time_slot format. Expected HH:MM (e.g. 08:00)", HTTPStatus.BAD_REQUEST)
 

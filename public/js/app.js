@@ -79,6 +79,19 @@
     return `${y}-${m}-${d}`;
   }
 
+  function isSlotInPast(dateISO, timeSlot) {
+    const now = new Date();
+    const todayISO = formatDateISO(now);
+
+    if (dateISO < todayISO) return true;
+    if (dateISO > todayISO) return false;
+
+    // Same day: calculate slot end time (e.g. 11:00 slot ends at 12:00:00)
+    const [slotHour, slotMin] = timeSlot.split(':').map(Number);
+    const slotEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), slotHour + 1, slotMin || 0, 0);
+    return now >= slotEnd;
+  }
+
   const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   // Desaturated Muted Pastel Palette (Washed-out, understated, stylish)
@@ -501,9 +514,11 @@
       const isFull = bookingsInSlot.length >= state.maxCapacity;
       const hasAttendees = bookingsInSlot.length > 0;
       const hourType = state.hourTypes[timeSlot] || 'MIXED';
+      const isPast = isSlotInPast(dateISO, timeSlot);
       
       const cell = document.createElement('div');
       let cellClasses = ['slot-cell', `hour-type-${hourType.toLowerCase()}`];
+      if (isPast) cellClasses.push('is-past');
       if (isBooked) cellClasses.push('is-booked');
       else if (isFull) cellClasses.push('is-full');
       else if (hasAttendees) cellClasses.push('has-attendees');
@@ -567,9 +582,11 @@
         const isBooked = bookingsInSlot.some(b => b.member_id === state.activeMemberId);
         const isFull = bookingsInSlot.length >= state.maxCapacity;
         const hasAttendees = bookingsInSlot.length > 0;
+        const isPast = isSlotInPast(dateISO, timeSlot);
 
         const slotCell = document.createElement('div');
         let slotClasses = ['slot-cell'];
+        if (isPast) slotClasses.push('is-past');
         if (isBooked) slotClasses.push('is-booked');
         else if (isFull) slotClasses.push('is-full');
         else if (hasAttendees) slotClasses.push('has-attendees');
@@ -643,12 +660,13 @@
 
     // Action button
     const actionBtn = document.createElement('button');
-    const isPast = dateISO < todayISO;
+    const isPast = isSlotInPast(dateISO, timeSlot);
 
     if (isPast) {
-      actionBtn.className = 'slot-btn btn-disabled';
+      actionBtn.className = 'slot-btn btn-disabled btn-past';
       actionBtn.textContent = '—';
       actionBtn.disabled = true;
+      actionBtn.title = 'Past time slot';
     } else if (isBookedByMe) {
       actionBtn.className = 'slot-btn btn-cancel';
       actionBtn.textContent = 'Cancel';
@@ -681,17 +699,13 @@
     }
 
     let count = 0;
-    const todayISO = formatDateISO(new Date());
-
     Object.keys(state.calendarData).forEach((dateKey) => {
-      if (dateKey >= todayISO) {
-        const daySlots = state.calendarData[dateKey];
-        Object.values(daySlots).forEach((bookings) => {
-          if (bookings.some((b) => b.member_id === state.activeMemberId)) {
-            count++;
-          }
-        });
-      }
+      const daySlots = state.calendarData[dateKey];
+      Object.entries(daySlots).forEach(([timeSlot, bookings]) => {
+        if (!isSlotInPast(dateKey, timeSlot) && bookings.some((b) => b.member_id === state.activeMemberId)) {
+          count++;
+        }
+      });
     });
 
     elements.myBookingsText.textContent = `${count} booked`;
