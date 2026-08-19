@@ -99,7 +99,10 @@ body {
 .app-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(36px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  padding-top: max(14px, calc(env(safe-area-inset-top, 0px) + 8px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(36px, calc(env(safe-area-inset-bottom, 0px) + 20px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
 }
 
 /* ==========================================================================
@@ -835,7 +838,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: max(16px, calc(env(safe-area-inset-top, 0px) + 12px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, calc(env(safe-area-inset-bottom, 0px) + 12px)) max(16px, env(safe-area-inset-left, 0px));
   z-index: 1000;
   opacity: 1;
   transition: opacity var(--transition-smooth);
@@ -1148,8 +1151,8 @@ body {
    ========================================================================== */
 .toast-container {
   position: fixed;
-  bottom: 16px;
-  right: 16px;
+  bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 12px));
+  right: max(16px, env(safe-area-inset-right, 0px));
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1175,7 +1178,10 @@ body {
    ========================================================================== */
 @media (max-width: 800px) {
   .app-container {
-    padding: 10px 10px 24px;
+    padding-top: max(14px, calc(env(safe-area-inset-top, 0px) + 10px));
+    padding-right: max(10px, env(safe-area-inset-right, 0px));
+    padding-bottom: max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+    padding-left: max(10px, env(safe-area-inset-left, 0px));
   }
 
   .legend-compact {
@@ -1206,6 +1212,39 @@ body {
 
   .slot-time-mini {
     display: inline-block;
+  }
+}
+
+@media (max-width: 540px) {
+  .app-header {
+    gap: 8px;
+  }
+
+  .brand-logo-img {
+    height: 20px;
+    max-width: 125px;
+  }
+
+  .header-right {
+    gap: 4px;
+  }
+
+  .member-select-wrap select {
+    max-width: 110px;
+    font-size: 0.76rem;
+    height: 26px;
+    padding: 0 16px 0 6px;
+  }
+
+  .btn-sm {
+    height: 26px;
+    padding: 0 7px;
+    font-size: 0.76rem;
+  }
+
+  .btn-icon {
+    width: 26px;
+    height: 26px;
   }
 }
 
@@ -1303,6 +1342,97 @@ body {
   font-size: 0.85rem;
 }
 
+/* Feedback Modal Styling */
+.feedback-card {
+  max-width: 420px;
+}
+
+.feedback-desc {
+  font-size: 0.82rem;
+  color: var(--ink-secondary);
+  line-height: 1.45;
+  margin-bottom: 4px;
+}
+
+.feedback-desc strong {
+  color: var(--ink-primary);
+  word-break: break-all;
+}
+
+.feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feedback-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feedback-form .form-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.feedback-form input,
+.feedback-form select,
+.feedback-form textarea {
+  padding: 6px 9px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius);
+  background: var(--bg-surface);
+  color: var(--ink-primary);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.feedback-form textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.4;
+}
+
+.feedback-form input:focus,
+.feedback-form select:focus,
+.feedback-form textarea:focus {
+  border-color: var(--border-dark);
+  box-shadow: 0 0 0 1px var(--border-dark);
+}
+
+.feedback-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.feedback-direct-note {
+  font-size: 0.76rem;
+  color: var(--ink-muted);
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.feedback-mail-link {
+  color: var(--ink-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
+}
+
+.feedback-mail-link:hover {
+  opacity: 0.8;
+}
+
 /* Standalone PWA Mode (When launched from iOS/Android Home Screen) */
 @media (display-mode: standalone) {
   body {
@@ -1310,6 +1440,11 @@ body {
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: contain;
+  }
+
+  .app-container {
+    padding-top: max(18px, calc(env(safe-area-inset-top, 0px) + 14px));
+    padding-bottom: max(28px, calc(env(safe-area-inset-bottom, 0px) + 20px));
   }
 
   #btn-install-app {

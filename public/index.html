@@ -10,7 +10,7 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Wild Gym">
   <meta name="application-name" content="Wild Gym">
   <meta name="theme-color" content="#131312" media="(prefers-color-scheme: dark)">
@@ -29,7 +29,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="css/style.css?v=6">
+  <link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
   <div id="app" class="app-container">
@@ -62,6 +62,9 @@
 
         <!-- Roster Button -->
         <button id="btn-manage-members" class="btn btn-sm" title="Manage Roster">Roster</button>
+
+        <!-- Feedback Button -->
+        <button id="btn-feedback" class="btn btn-sm" title="Send Feedback">Feedback</button>
 
         <!-- Theme Toggle -->
         <button id="btn-theme-toggle" class="btn-icon" title="Theme" aria-label="Toggle Theme">
@@ -190,10 +193,62 @@
       </div>
     </div>
 
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+      <div class="modal-card feedback-card">
+        <div class="modal-header">
+          <h3>Send Feedback</h3>
+          <button id="btn-close-feedback-modal" class="btn-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body feedback-body">
+          <p class="feedback-desc">
+            Have a suggestion, noticed an issue, or want to request a feature? Your feedback will be delivered directly to <strong>fusetti.riccardo@gmail.com</strong>.
+          </p>
+
+          <form id="form-feedback" class="feedback-form">
+            <div class="form-group">
+              <label for="feedback-member-name" class="form-label">Your Name</label>
+              <input type="text" id="feedback-member-name" placeholder="Name" maxlength="50" autocomplete="name">
+            </div>
+
+            <div class="form-group">
+              <label for="feedback-email" class="form-label">Your Email (optional)</label>
+              <input type="email" id="feedback-email" placeholder="you@example.com" maxlength="80" autocomplete="email">
+            </div>
+
+            <div class="form-group">
+              <label for="feedback-category" class="form-label">Topic</label>
+              <select id="feedback-category">
+                <option value="General Feedback">General Feedback</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Bug / Issue">Bug / Issue</option>
+                <option value="Gym Equipment & Facility">Gym Equipment &amp; Facility</option>
+                <option value="Schedule & Booking">Schedule &amp; Booking</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="feedback-message" class="form-label">Message</label>
+              <textarea id="feedback-message" rows="4" placeholder="Type your feedback here..." required maxlength="2000"></textarea>
+            </div>
+
+            <div class="feedback-actions">
+              <button type="button" id="btn-email-client-direct" class="btn btn-sm" title="Open directly in default email client">Mail Client</button>
+              <button type="submit" id="btn-submit-feedback" class="btn btn-sm btn-solid">Send Feedback</button>
+            </div>
+          </form>
+
+          <div class="feedback-direct-note">
+            Direct email: <a href="mailto:fusetti.riccardo@gmail.com?subject=Wild%20Island%20Gym%20Feedback" class="feedback-mail-link">fusetti.riccardo@gmail.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
   </div>
 
-  <script src="js/app.js?v=6"></script>
+  <script src="js/app.js?v=8"></script>
 </body>
 </html>

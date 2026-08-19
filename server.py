@@ -79,6 +79,19 @@ def init_db():
             )
         """)
 
+        # Feedback table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS feedback (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                member_name TEXT,
+                email TEXT,
+                category TEXT NOT NULL DEFAULT 'General Feedback',
+                message TEXT NOT NULL,
+                target_email TEXT NOT NULL DEFAULT 'fusetti.riccardo@gmail.com',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         # Seed initial sample members if table is empty
         cursor.execute("SELECT COUNT(*) as count FROM members")
         if cursor.fetchone()["count"] == 0:
@@ -288,6 +301,18 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
                 bookings = [dict(row) for row in cursor.fetchall()]
                 return self._send_json({"bookings": bookings})
 
+        # API: Get feedback
+        if path == "/api/feedback":
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT id, member_name, email, category, message, target_email, created_at
+                    FROM feedback
+                    ORDER BY created_at DESC
+                """)
+                feedback_items = [dict(row) for row in cursor.fetchall()]
+                return self._send_json({"feedback": feedback_items})
+
         # Fallback to static file server (public/)
         return super().do_GET()
 
@@ -369,6 +394,30 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
                 )
                 conn.commit()
                 return self._send_json({"message": "Hour type updated", "time_slot": time_slot, "slot_type": slot_type})
+
+        # API: Submit feedback
+        if path == "/api/feedback":
+            message = (data.get("message") or "").strip()
+            member_name = (data.get("member_name") or "").strip()
+            email = (data.get("email") or "").strip()
+            category = (data.get("category") or "General Feedback").strip()
+
+            if not message:
+                return self._send_error("Feedback message cannot be empty", HTTPStatus.BAD_REQUEST)
+
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO feedback (member_name, email, category, message, target_email) VALUES (?, ?, ?, ?, ?)",
+                    (member_name if member_name else None, email if email else None, category, message, "fusetti.riccardo@gmail.com")
+                )
+                conn.commit()
+                new_id = cursor.lastrowid
+                return self._send_json({
+                    "message": "Feedback submitted successfully",
+                    "id": new_id,
+                    "target_email": "fusetti.riccardo@gmail.com"
+                }, HTTPStatus.CREATED)
 
         # API: Add rule
         if path == "/api/rules":

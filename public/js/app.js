@@ -53,7 +53,16 @@
     btnInstallApp: document.getElementById('btn-install-app'),
     iosInstallModal: document.getElementById('ios-install-modal'),
     btnCloseIosInstall: document.getElementById('btn-close-ios-install'),
-    btnGotItIos: document.getElementById('btn-got-it-ios')
+    btnGotItIos: document.getElementById('btn-got-it-ios'),
+    btnFeedback: document.getElementById('btn-feedback'),
+    feedbackModal: document.getElementById('feedback-modal'),
+    btnCloseFeedbackModal: document.getElementById('btn-close-feedback-modal'),
+    formFeedback: document.getElementById('form-feedback'),
+    feedbackMemberName: document.getElementById('feedback-member-name'),
+    feedbackEmail: document.getElementById('feedback-email'),
+    feedbackCategory: document.getElementById('feedback-category'),
+    feedbackMessage: document.getElementById('feedback-message'),
+    btnEmailClientDirect: document.getElementById('btn-email-client-direct')
   };
 
   // Date Helpers
@@ -753,13 +762,17 @@
   }
 
   function setTheme(theme) {
-    if (theme === 'dark') {
+    const isDark = theme === 'dark';
+    if (isDark) {
       document.documentElement.setAttribute('data-theme', 'dark');
       elements.themeIcon.textContent = '◐';
     } else {
       document.documentElement.removeAttribute('data-theme');
       elements.themeIcon.textContent = '◑';
     }
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute('content', isDark ? '#131312' : '#F7F8F9');
+    });
     localStorage.setItem('gym_theme', theme);
   }
 
@@ -922,6 +935,112 @@
         if (e.target === elements.iosInstallModal) {
           elements.iosInstallModal.classList.add('hidden');
         }
+      });
+    }
+
+    // Feedback Modal & Submission
+    const TARGET_FEEDBACK_EMAIL = 'fusetti.riccardo@gmail.com';
+
+    function getMailtoFeedbackUrl(name, email, category, message) {
+      const subject = encodeURIComponent(`[Wild Gym Feedback] ${category}${name ? ` - ${name}` : ''}`);
+      let body = `Topic: ${category}\n`;
+      if (name) body += `From: ${name}\n`;
+      if (email) body += `Email: ${email}\n`;
+      body += `Date: ${new Date().toLocaleString()}\n`;
+      body += `\nMessage:\n${message || '(No message content)'}\n\n---\nSent via Wild Island Gym App`;
+      return `mailto:${TARGET_FEEDBACK_EMAIL}?subject=${subject}&body=${encodeURIComponent(body)}`;
+    }
+
+    async function submitFeedback(name, email, category, message) {
+      try {
+        const response = await fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            member_name: name,
+            email: email,
+            category: category,
+            message: message
+          })
+        });
+        return response.ok;
+      } catch (err) {
+        console.warn('Feedback API sync error:', err);
+        return false;
+      }
+    }
+
+    function openFeedbackModal() {
+      const activeMember = state.members.find(m => m.id === state.activeMemberId);
+      if (activeMember) {
+        if (elements.feedbackMemberName && !elements.feedbackMemberName.value) {
+          elements.feedbackMemberName.value = activeMember.name || '';
+        }
+        if (elements.feedbackEmail && !elements.feedbackEmail.value && activeMember.email) {
+          elements.feedbackEmail.value = activeMember.email || '';
+        }
+      }
+      if (elements.feedbackModal) {
+        elements.feedbackModal.classList.remove('hidden');
+      }
+      if (elements.feedbackMessage) {
+        elements.feedbackMessage.focus();
+      }
+    }
+
+    if (elements.btnFeedback) {
+      elements.btnFeedback.addEventListener('click', openFeedbackModal);
+    }
+
+    if (elements.btnCloseFeedbackModal) {
+      elements.btnCloseFeedbackModal.addEventListener('click', () => {
+        if (elements.feedbackModal) elements.feedbackModal.classList.add('hidden');
+      });
+    }
+
+    if (elements.feedbackModal) {
+      elements.feedbackModal.addEventListener('click', (e) => {
+        if (e.target === elements.feedbackModal) {
+          elements.feedbackModal.classList.add('hidden');
+        }
+      });
+    }
+
+    if (elements.btnEmailClientDirect) {
+      elements.btnEmailClientDirect.addEventListener('click', () => {
+        const name = elements.feedbackMemberName ? elements.feedbackMemberName.value.trim() : '';
+        const email = elements.feedbackEmail ? elements.feedbackEmail.value.trim() : '';
+        const category = elements.feedbackCategory ? elements.feedbackCategory.value : 'General Feedback';
+        const message = elements.feedbackMessage ? elements.feedbackMessage.value.trim() : '';
+        const mailtoUrl = getMailtoFeedbackUrl(name, email, category, message);
+        window.location.href = mailtoUrl;
+      });
+    }
+
+    if (elements.formFeedback) {
+      elements.formFeedback.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = elements.feedbackMemberName ? elements.feedbackMemberName.value.trim() : '';
+        const email = elements.feedbackEmail ? elements.feedbackEmail.value.trim() : '';
+        const category = elements.feedbackCategory ? elements.feedbackCategory.value : 'General Feedback';
+        const message = elements.feedbackMessage ? elements.feedbackMessage.value.trim() : '';
+
+        if (!message) {
+          showToast('Please enter your feedback message');
+          return;
+        }
+
+        // 1. Submit to server API
+        await submitFeedback(name, email, category, message);
+
+        // 2. Open email client prefilled for fusetti.riccardo@gmail.com
+        const mailtoUrl = getMailtoFeedbackUrl(name, email, category, message);
+        window.location.href = mailtoUrl;
+
+        // 3. Show notification and close modal
+        showToast('Feedback sent to fusetti.riccardo@gmail.com! Thank you.');
+        if (elements.feedbackMessage) elements.feedbackMessage.value = '';
+        if (elements.feedbackModal) elements.feedbackModal.classList.add('hidden');
       });
     }
 
