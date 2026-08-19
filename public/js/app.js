@@ -62,7 +62,25 @@
     feedbackEmail: document.getElementById('feedback-email'),
     feedbackCategory: document.getElementById('feedback-category'),
     feedbackMessage: document.getElementById('feedback-message'),
-    btnEmailClientDirect: document.getElementById('btn-email-client-direct')
+    btnEmailClientDirect: document.getElementById('btn-email-client-direct'),
+    // Drawer & Consolidated Navigation
+    btnMenuToggle: document.getElementById('btn-menu-toggle'),
+    sideMenuDrawer: document.getElementById('side-menu-drawer'),
+    menuDrawerBackdrop: document.getElementById('menu-drawer-backdrop'),
+    btnCloseDrawer: document.getElementById('btn-close-drawer'),
+    btnDrawerGuide: document.getElementById('btn-drawer-guide'),
+    btnDrawerRules: document.getElementById('btn-drawer-rules'),
+    btnDrawerRoster: document.getElementById('btn-drawer-roster'),
+    drawerRosterCount: document.getElementById('drawer-roster-count'),
+    btnDrawerFeedback: document.getElementById('btn-drawer-feedback'),
+    btnDrawerTheme: document.getElementById('btn-drawer-theme'),
+    drawerThemeIcon: document.getElementById('drawer-theme-icon'),
+    drawerThemeLabel: document.getElementById('drawer-theme-label'),
+    btnDrawerInstall: document.getElementById('btn-drawer-install'),
+    // How to Use Guide Modal
+    guideModal: document.getElementById('guide-modal'),
+    btnCloseGuideModal: document.getElementById('btn-close-guide-modal'),
+    btnGuideDone: document.getElementById('btn-guide-done')
   };
 
   // Date Helpers
@@ -440,7 +458,8 @@
   }
 
   function renderMembersList() {
-    elements.membersCount.textContent = state.members.length;
+    if (elements.membersCount) elements.membersCount.textContent = state.members.length;
+    if (elements.drawerRosterCount) elements.drawerRosterCount.textContent = state.members.length;
     elements.membersList.innerHTML = '';
 
     if (state.members.length === 0) {
@@ -765,10 +784,14 @@
     const isDark = theme === 'dark';
     if (isDark) {
       document.documentElement.setAttribute('data-theme', 'dark');
-      elements.themeIcon.textContent = '◐';
+      if (elements.themeIcon) elements.themeIcon.textContent = '◐';
+      if (elements.drawerThemeIcon) elements.drawerThemeIcon.textContent = '◐';
+      if (elements.drawerThemeLabel) elements.drawerThemeLabel.textContent = 'Dark';
     } else {
       document.documentElement.removeAttribute('data-theme');
-      elements.themeIcon.textContent = '◑';
+      if (elements.themeIcon) elements.themeIcon.textContent = '◑';
+      if (elements.drawerThemeIcon) elements.drawerThemeIcon.textContent = '◑';
+      if (elements.drawerThemeLabel) elements.drawerThemeLabel.textContent = 'Light';
     }
     document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
       meta.setAttribute('content', isDark ? '#131312' : '#F7F8F9');
@@ -782,116 +805,150 @@
   }
 
   function setupEventListeners() {
-    elements.memberSelect.addEventListener('change', (e) => {
-      const selectedId = parseInt(e.target.value, 10);
-      if (selectedId) setActiveMember(selectedId);
-    });
+    if (elements.memberSelect) {
+      elements.memberSelect.addEventListener('change', (e) => {
+        const selectedId = parseInt(e.target.value, 10);
+        if (selectedId) setActiveMember(selectedId);
+      });
+    }
 
-    elements.btnThemeToggle.addEventListener('click', toggleTheme);
+    if (elements.btnThemeToggle) {
+      elements.btnThemeToggle.addEventListener('click', toggleTheme);
+    }
 
-    elements.btnPrevWeek.addEventListener('click', () => {
-      state.currentWeekStart = addDays(state.currentWeekStart, -7);
-      fetchCalendar();
-    });
+    if (elements.btnPrevWeek) {
+      elements.btnPrevWeek.addEventListener('click', () => {
+        state.currentWeekStart = addDays(state.currentWeekStart, -7);
+        fetchCalendar();
+      });
+    }
 
-    elements.btnToday.addEventListener('click', () => {
-      state.currentWeekStart = getMonday(new Date());
-      const today = new Date();
-      state.selectedMobileDayIndex = (today.getDay() + 6) % 7;
-      fetchCalendar();
-    });
+    if (elements.btnToday) {
+      elements.btnToday.addEventListener('click', () => {
+        state.currentWeekStart = getMonday(new Date());
+        const today = new Date();
+        state.selectedMobileDayIndex = (today.getDay() + 6) % 7;
+        fetchCalendar();
+      });
+    }
 
-    elements.btnNextWeek.addEventListener('click', () => {
-      state.currentWeekStart = addDays(state.currentWeekStart, 7);
-      fetchCalendar();
-    });
+    if (elements.btnNextWeek) {
+      elements.btnNextWeek.addEventListener('click', () => {
+        state.currentWeekStart = addDays(state.currentWeekStart, 7);
+        fetchCalendar();
+      });
+    }
 
-    elements.btnRules.addEventListener('click', () => {
-      toggleRulesEditMode(false);
-      elements.rulesModal.classList.remove('hidden');
-    });
+    if (elements.btnRules) {
+      elements.btnRules.addEventListener('click', () => {
+        toggleRulesEditMode(false);
+        if (elements.rulesModal) elements.rulesModal.classList.remove('hidden');
+      });
+    }
 
-    elements.btnCloseRulesModal.addEventListener('click', () => {
-      elements.rulesModal.classList.add('hidden');
-    });
+    if (elements.btnCloseRulesModal) {
+      elements.btnCloseRulesModal.addEventListener('click', () => {
+        if (elements.rulesModal) elements.rulesModal.classList.add('hidden');
+      });
+    }
 
-    elements.rulesModal.addEventListener('click', (e) => {
-      if (e.target === elements.rulesModal) {
-        elements.rulesModal.classList.add('hidden');
-      }
-    });
-
-    elements.btnEditRules.addEventListener('click', () => {
-      toggleRulesEditMode(true);
-    });
-
-    elements.btnCancelRulesEdit.addEventListener('click', () => {
-      toggleRulesEditMode(false);
-    });
-
-    elements.btnAddRuleRow.addEventListener('click', () => {
-      const newRow = createRuleEditRow('Rule', '', '');
-      elements.rulesEditList.appendChild(newRow);
-      const titleInput = newRow.querySelector('.rule-edit-title');
-      if (titleInput) titleInput.focus();
-    });
-
-    elements.rulesEditList.addEventListener('click', (e) => {
-      if (e.target.classList.contains('btn-delete-rule')) {
-        const row = e.target.closest('.rule-edit-row');
-        if (row) row.remove();
-      }
-    });
-
-    elements.btnSaveRules.addEventListener('click', () => {
-      const rows = elements.rulesEditList.querySelectorAll('.rule-edit-row');
-      const updatedRules = [];
-      rows.forEach((row) => {
-        const cat = row.querySelector('.rule-edit-cat').value.trim();
-        const title = row.querySelector('.rule-edit-title').value.trim();
-        const sub = row.querySelector('.rule-edit-sub').value.trim();
-        if (title) {
-          updatedRules.push({
-            category: cat || 'Rule',
-            title: title,
-            subtitle: sub
-          });
+    if (elements.rulesModal) {
+      elements.rulesModal.addEventListener('click', (e) => {
+        if (e.target === elements.rulesModal) {
+          elements.rulesModal.classList.add('hidden');
         }
       });
-      if (updatedRules.length === 0) {
-        showToast('Please provide at least 1 rule');
-        return;
-      }
-      saveRules(updatedRules);
-    });
+    }
 
-    elements.btnManageMembers.addEventListener('click', () => {
-      elements.membersModal.classList.remove('hidden');
-      elements.inputMemberName.focus();
-    });
+    if (elements.btnEditRules) {
+      elements.btnEditRules.addEventListener('click', () => {
+        toggleRulesEditMode(true);
+      });
+    }
 
-    elements.btnCloseModal.addEventListener('click', () => {
-      elements.membersModal.classList.add('hidden');
-    });
+    if (elements.btnCancelRulesEdit) {
+      elements.btnCancelRulesEdit.addEventListener('click', () => {
+        toggleRulesEditMode(false);
+      });
+    }
 
-    elements.membersModal.addEventListener('click', (e) => {
-      if (e.target === elements.membersModal) {
-        elements.membersModal.classList.add('hidden');
-      }
-    });
+    if (elements.btnAddRuleRow) {
+      elements.btnAddRuleRow.addEventListener('click', () => {
+        const newRow = createRuleEditRow('Rule', '', '');
+        elements.rulesEditList.appendChild(newRow);
+        const titleInput = newRow.querySelector('.rule-edit-title');
+        if (titleInput) titleInput.focus();
+      });
+    }
 
-    elements.formAddMember.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = elements.inputMemberName.value.trim();
-      const email = elements.inputMemberEmail.value.trim();
-      if (!name) return;
+    if (elements.rulesEditList) {
+      elements.rulesEditList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-delete-rule')) {
+          const row = e.target.closest('.rule-edit-row');
+          if (row) row.remove();
+        }
+      });
+    }
 
-      const success = await addMember(name, email);
-      if (success) {
-        elements.inputMemberName.value = '';
-        elements.inputMemberEmail.value = '';
-      }
-    });
+    if (elements.btnSaveRules) {
+      elements.btnSaveRules.addEventListener('click', () => {
+        const rows = elements.rulesEditList.querySelectorAll('.rule-edit-row');
+        const updatedRules = [];
+        rows.forEach((row) => {
+          const cat = row.querySelector('.rule-edit-cat').value.trim();
+          const title = row.querySelector('.rule-edit-title').value.trim();
+          const sub = row.querySelector('.rule-edit-sub').value.trim();
+          if (title) {
+            updatedRules.push({
+              category: cat || 'Rule',
+              title: title,
+              subtitle: sub
+            });
+          }
+        });
+        if (updatedRules.length === 0) {
+          showToast('Please provide at least 1 rule');
+          return;
+        }
+        saveRules(updatedRules);
+      });
+    }
+
+    if (elements.btnManageMembers) {
+      elements.btnManageMembers.addEventListener('click', () => {
+        if (elements.membersModal) elements.membersModal.classList.remove('hidden');
+        if (elements.inputMemberName) elements.inputMemberName.focus();
+      });
+    }
+
+    if (elements.btnCloseModal) {
+      elements.btnCloseModal.addEventListener('click', () => {
+        if (elements.membersModal) elements.membersModal.classList.add('hidden');
+      });
+    }
+
+    if (elements.membersModal) {
+      elements.membersModal.addEventListener('click', (e) => {
+        if (e.target === elements.membersModal) {
+          elements.membersModal.classList.add('hidden');
+        }
+      });
+    }
+
+    if (elements.formAddMember) {
+      elements.formAddMember.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = elements.inputMemberName.value.trim();
+        const email = elements.inputMemberEmail.value.trim();
+        if (!name) return;
+
+        const success = await addMember(name, email);
+        if (success) {
+          elements.inputMemberName.value = '';
+          elements.inputMemberEmail.value = '';
+        }
+      });
+    }
 
     elements.membersList.addEventListener('click', (e) => {
       if (e.target.classList.contains('btn-del')) {
@@ -1016,7 +1073,6 @@
         window.location.href = mailtoUrl;
       });
     }
-
     if (elements.formFeedback) {
       elements.formFeedback.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -1043,6 +1099,123 @@
         if (elements.feedbackModal) elements.feedbackModal.classList.add('hidden');
       });
     }
+
+    // ==========================================================================
+    // Drawer Navigation Menu Handlers
+    // ==========================================================================
+    function openDrawer() {
+      if (elements.sideMenuDrawer) elements.sideMenuDrawer.classList.remove('hidden');
+      if (elements.menuDrawerBackdrop) elements.menuDrawerBackdrop.classList.remove('hidden');
+      if (elements.btnMenuToggle) elements.btnMenuToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeDrawer() {
+      if (elements.sideMenuDrawer) elements.sideMenuDrawer.classList.add('hidden');
+      if (elements.menuDrawerBackdrop) elements.menuDrawerBackdrop.classList.add('hidden');
+      if (elements.btnMenuToggle) elements.btnMenuToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    if (elements.btnMenuToggle) {
+      elements.btnMenuToggle.addEventListener('click', openDrawer);
+    }
+
+    if (elements.btnCloseDrawer) {
+      elements.btnCloseDrawer.addEventListener('click', closeDrawer);
+    }
+
+    if (elements.menuDrawerBackdrop) {
+      elements.menuDrawerBackdrop.addEventListener('click', closeDrawer);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeDrawer();
+        if (elements.rulesModal) elements.rulesModal.classList.add('hidden');
+        if (elements.membersModal) elements.membersModal.classList.add('hidden');
+        if (elements.feedbackModal) elements.feedbackModal.classList.add('hidden');
+        if (elements.guideModal) {
+          elements.guideModal.classList.add('hidden');
+        }
+      }
+    });
+
+    if (elements.btnDrawerGuide) {
+      elements.btnDrawerGuide.addEventListener('click', () => {
+        closeDrawer();
+        if (elements.guideModal) elements.guideModal.classList.remove('hidden');
+      });
+    }
+
+    if (elements.btnCloseGuideModal) {
+      elements.btnCloseGuideModal.addEventListener('click', () => {
+        if (elements.guideModal) elements.guideModal.classList.add('hidden');
+      });
+    }
+
+    if (elements.btnGuideDone) {
+      elements.btnGuideDone.addEventListener('click', () => {
+        if (elements.guideModal) elements.guideModal.classList.add('hidden');
+      });
+    }
+
+    if (elements.guideModal) {
+      elements.guideModal.addEventListener('click', (e) => {
+        if (e.target === elements.guideModal) {
+          elements.guideModal.classList.add('hidden');
+        }
+      });
+    }
+
+    if (elements.btnDrawerRules) {
+      elements.btnDrawerRules.addEventListener('click', () => {
+        closeDrawer();
+        toggleRulesEditMode(false);
+        if (elements.rulesModal) elements.rulesModal.classList.remove('hidden');
+      });
+    }
+
+    if (elements.btnDrawerRoster) {
+      elements.btnDrawerRoster.addEventListener('click', () => {
+        closeDrawer();
+        if (elements.membersModal) elements.membersModal.classList.remove('hidden');
+        if (elements.inputMemberName) elements.inputMemberName.focus();
+      });
+    }
+
+    if (elements.btnDrawerFeedback) {
+      elements.btnDrawerFeedback.addEventListener('click', () => {
+        closeDrawer();
+        openFeedbackModal();
+      });
+    }
+
+    if (elements.btnDrawerTheme) {
+      elements.btnDrawerTheme.addEventListener('click', () => {
+        toggleTheme();
+      });
+    }
+
+    if (elements.btnDrawerInstall) {
+      elements.btnDrawerInstall.addEventListener('click', () => {
+        closeDrawer();
+        if (deferredInstallPrompt) {
+          deferredInstallPrompt.prompt();
+          deferredInstallPrompt.userChoice.then(({ outcome }) => {
+            if (outcome === 'accepted') {
+              if (elements.btnInstallApp) elements.btnInstallApp.classList.add('hidden');
+              if (elements.btnDrawerInstall) elements.btnDrawerInstall.classList.add('hidden');
+            }
+            deferredInstallPrompt = null;
+          });
+        } else if (isIOS()) {
+          if (elements.iosInstallModal) elements.iosInstallModal.classList.remove('hidden');
+        } else {
+          showToast('To install, use browser menu -> Add to Home screen');
+        }
+      });
+    }
+
+
 
     window.addEventListener('resize', () => {
       const isMobile = window.innerWidth <= 800;

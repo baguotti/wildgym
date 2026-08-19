@@ -1451,3 +1451,249 @@ body {
     display: none !important;
   }
 }
+
+/* ==========================================================================
+   Consolidated Burger Navigation Drawer
+   ========================================================================== */
+.btn-burger {
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius);
+  color: var(--ink-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-burger:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-dark);
+}
+
+.btn-burger:active {
+  transform: scale(0.94);
+}
+
+.burger-icon {
+  display: block;
+}
+
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(2px);
+  z-index: 1400;
+  opacity: 1;
+  transition: opacity 0.22s ease;
+}
+
+.drawer-backdrop.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.menu-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 310px;
+  max-width: 85vw;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-base);
+  z-index: 1450;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.16);
+  transform: translateX(0);
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: max(14px, calc(env(safe-area-inset-top, 0px) + 8px)) max(14px, env(safe-area-inset-right, 0px)) max(20px, calc(env(safe-area-inset-bottom, 0px) + 12px)) max(14px, env(safe-area-inset-left, 0px));
+}
+
+.menu-drawer.hidden {
+  transform: translateX(105%);
+  pointer-events: none;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-hairline);
+  margin-bottom: 12px;
+}
+
+.drawer-brand {
+  display: flex;
+  align-items: center;
+}
+
+.drawer-logo-img {
+  height: 20px;
+  width: auto;
+  max-width: 150px;
+  object-fit: contain;
+}
+
+[data-theme="dark"] .drawer-logo-img {
+  filter: invert(1) brightness(1.05);
+}
+
+.drawer-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  padding: 0 4px;
+}
+
+.drawer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drawer-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--ink-primary);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.drawer-nav-item:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-hairline);
+}
+
+.drawer-nav-item.drawer-item-highlighted {
+  background: var(--bg-subtle);
+  border-color: var(--border-base);
+  font-weight: 600;
+}
+
+.drawer-nav-item:active {
+  transform: scale(0.98);
+}
+
+.drawer-item-label {
+  flex: 1;
+}
+
+.drawer-item-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-base);
+  border-radius: 10px;
+  color: var(--ink-secondary);
+}
+
+.drawer-footer {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drawer-footer-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+.drawer-footer-sub {
+  font-size: 0.68rem;
+  color: var(--ink-muted);
+  word-break: break-all;
+}
+
+/* ==========================================================================
+   Simplified How to Use Tutorial Modal
+   ========================================================================== */
+.guide-card {
+  max-width: 440px;
+}
+
+.guide-body {
+  padding: 14px;
+  max-height: 75vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.guide-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius);
+}
+
+.guide-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ink-primary);
+  color: var(--bg-page);
+  font-size: 0.70rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.guide-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.guide-info strong {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+
+.guide-info p {
+  font-size: 0.75rem;
+  color: var(--ink-secondary);
+  line-height: 1.35;
+  margin: 0;
+}
+
+

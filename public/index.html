@@ -29,7 +29,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="stylesheet" href="css/style.css?v=11">
 </head>
 <body>
   <div id="app" class="app-container">
@@ -57,18 +57,13 @@
           </select>
         </div>
 
-        <!-- Rules Button -->
-        <button id="btn-rules" class="btn btn-sm" title="Gym Rules">Rules</button>
-
-        <!-- Roster Button -->
-        <button id="btn-manage-members" class="btn btn-sm" title="Manage Roster">Roster</button>
-
-        <!-- Feedback Button -->
-        <button id="btn-feedback" class="btn btn-sm" title="Send Feedback">Feedback</button>
-
-        <!-- Theme Toggle -->
-        <button id="btn-theme-toggle" class="btn-icon" title="Theme" aria-label="Toggle Theme">
-          <span id="theme-icon">◐</span>
+        <!-- Burger Navigation Menu Button -->
+        <button id="btn-menu-toggle" class="btn-icon btn-burger" title="Menu" aria-label="Open Navigation Menu" aria-expanded="false">
+          <svg class="burger-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
         </button>
       </div>
     </header>
@@ -245,10 +240,121 @@
       </div>
     </div>
 
+    <!-- Slide-in Navigation Drawer -->
+    <div id="menu-drawer-backdrop" class="drawer-backdrop hidden" aria-hidden="true"></div>
+    <aside id="side-menu-drawer" class="menu-drawer hidden" aria-label="Navigation Menu" role="dialog" aria-modal="true">
+      <div class="drawer-header">
+        <div class="drawer-brand">
+          <img src="assets/img/logo.png" alt="Wild Island Gym" class="drawer-logo-img">
+        </div>
+        <button id="btn-close-drawer" class="btn-close" aria-label="Close Menu">&times;</button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="drawer-section-title">Menu &amp; Help</div>
+        <nav class="drawer-nav">
+          <button id="btn-drawer-guide" class="drawer-nav-item drawer-item-highlighted">
+            <span class="drawer-item-label">How to Use</span>
+          </button>
+
+          <button id="btn-drawer-rules" class="drawer-nav-item">
+            <span class="drawer-item-label">Gym Rules</span>
+          </button>
+          
+          <button id="btn-drawer-roster" class="drawer-nav-item">
+            <span class="drawer-item-label">Member Roster</span>
+            <span id="drawer-roster-count" class="drawer-item-badge">0</span>
+          </button>
+
+          <button id="btn-drawer-feedback" class="drawer-nav-item">
+            <span class="drawer-item-label">Send Feedback</span>
+          </button>
+
+          <button id="btn-drawer-theme" class="drawer-nav-item">
+            <span class="drawer-item-label">Theme Mode</span>
+            <span id="drawer-theme-label" class="drawer-item-badge">Light</span>
+          </button>
+
+          <button id="btn-drawer-install" class="drawer-nav-item hidden">
+            <span class="drawer-item-label">Install App</span>
+          </button>
+        </nav>
+
+        <div class="drawer-footer">
+          <div class="drawer-footer-text">Wild Island Gym &bull; v1.2</div>
+          <div class="drawer-footer-sub">Contact: fusetti.riccardo@gmail.com</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Concise How to Use Tutorial Modal -->
+    <div id="guide-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+      <div class="modal-card guide-card">
+        <div class="modal-header">
+          <h3>How to Use Wild Gym</h3>
+          <button id="btn-close-guide-modal" class="btn-close" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="modal-body guide-body">
+          <div class="guide-steps" id="guide-steps-container">
+            <div class="guide-step">
+              <div class="guide-num">1</div>
+              <div class="guide-info">
+                <strong>Choose Your Profile</strong>
+                <p>Select your name from the dropdown at the top right before booking. If you're new, tap <em>Roster</em> in the menu to add yourself.</p>
+              </div>
+            </div>
+
+            <div class="guide-step">
+              <div class="guide-num">2</div>
+              <div class="guide-info">
+                <strong>Book an Open Slot</strong>
+                <p>Tap any available 1-hour time slot on the calendar. Up to 3 people can book per session. A checkmark confirms your reservation.</p>
+              </div>
+            </div>
+
+            <div class="guide-step">
+              <div class="guide-num">3</div>
+              <div class="guide-info">
+                <strong>Cancel Anytime</strong>
+                <p>Need to cancel? Just tap your booked slot again and confirm. The slot immediately becomes available for other members.</p>
+              </div>
+            </div>
+
+            <div class="guide-step">
+              <div class="guide-num">4</div>
+              <div class="guide-info">
+                <strong>Check Hour Types</strong>
+                <p>Look at the badges on the left column: hours are labeled as <em>Mixed</em>, <em>Male Only</em>, or <em>Female Only</em>.</p>
+              </div>
+            </div>
+
+            <div class="guide-step">
+              <div class="guide-num">5</div>
+              <div class="guide-info">
+                <strong>Navigate Schedule</strong>
+                <p>Use the left/right arrows to browse weeks or tap <em>Today</em>. On phones, tap the day tabs above the calendar.</p>
+              </div>
+            </div>
+
+            <div class="guide-step">
+              <div class="guide-num">6</div>
+              <div class="guide-info">
+                <strong>Gym Care &amp; Feedback</strong>
+                <p>Please wipe equipment after use and re-rack weights. Use <em>Send Feedback</em> in the menu anytime to reach Riccardo.</p>
+              </div>
+            </div>
+          </div>
+
+          <button id="btn-guide-done" class="btn btn-solid btn-block" style="margin-top: 6px;">Got It</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
   </div>
 
-  <script src="js/app.js?v=8"></script>
+  <script src="js/app.js?v=11"></script>
 </body>
 </html>
