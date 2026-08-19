@@ -109,6 +109,21 @@ def init_db():
                 sample_members
             )
 
+        # Seed initial sample rules if rules table is empty
+        cursor.execute("SELECT COUNT(*) as count FROM rules")
+        if cursor.fetchone()["count"] == 0:
+            sample_rules = [
+                ("Rule", "Wipe down all equipment and benches after use", "", 0),
+                ("Rule", "Re-rack all dumbbells and weight plates in their correct spots", "", 1),
+                ("Rule", "Maximum 3 members per 1-hour session", "", 2),
+                ("Rule", "Respect designated Mixed, Male Only, and Female Only hours", "", 3),
+                ("Rule", "Wear clean athletic footwear and gym attire", "", 4)
+            ]
+            cursor.executemany(
+                "INSERT INTO rules (category, title, subtitle, sort_order) VALUES (?, ?, ?, ?)",
+                sample_rules
+            )
+
         # Hour types table (MALE / FEMALE / MIXED)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS hour_types (
@@ -199,7 +214,11 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
             with get_db_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("SELECT id, category, title, subtitle, sort_order FROM rules ORDER BY sort_order ASC, id ASC")
-                rules = [dict(row) for row in cursor.fetchall()]
+                rules = []
+                for row in cursor.fetchall():
+                    r = dict(row)
+                    r["text"] = r["title"]
+                    rules.append(r)
                 return self._send_json({"rules": rules})
 
         # API: Get hour types
@@ -421,12 +440,12 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
 
         # API: Add rule
         if path == "/api/rules":
+            rule_text = (data.get("text") or data.get("title") or "").strip()
             category = (data.get("category") or "Rule").strip()
-            title = (data.get("title") or "").strip()
             subtitle = (data.get("subtitle") or "").strip()
 
-            if not title:
-                return self._send_error("Rule title is required", HTTPStatus.BAD_REQUEST)
+            if not rule_text:
+                return self._send_error("Rule text is required", HTTPStatus.BAD_REQUEST)
 
             with get_db_connection() as conn:
                 cursor = conn.cursor()
@@ -434,13 +453,13 @@ class GymBookingHandler(SimpleHTTPRequestHandler):
                 next_order = cursor.fetchone()["count"]
                 cursor.execute(
                     "INSERT INTO rules (category, title, subtitle, sort_order) VALUES (?, ?, ?, ?)",
-                    (category, title, subtitle, next_order)
+                    (category, rule_text, subtitle, next_order)
                 )
                 conn.commit()
                 new_id = cursor.lastrowid
                 return self._send_json({
                     "message": "Rule added successfully",
-                    "rule": {"id": new_id, "category": category, "title": title, "subtitle": subtitle, "sort_order": next_order}
+                    "rule": {"id": new_id, "text": rule_text, "title": rule_text, "category": category, "subtitle": subtitle, "sort_order": next_order}
                 }, HTTPStatus.CREATED)
 
         # API: Add member

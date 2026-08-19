@@ -29,7 +29,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="css/style.css?v=11">
+  <link rel="stylesheet" href="css/style.css?v=12">
 </head>
 <body>
   <div id="app" class="app-container">
@@ -118,37 +118,22 @@
       </div>
     </div>
 
-    <!-- Gym Rules Modal -->
+    <!-- Gym Rules Modal (Simple Clean Text Rules) -->
     <div id="rules-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
       <div class="modal-card rules-card">
         <div class="modal-header">
-          <h3>Gym Rules & Guidelines</h3>
-          <div class="modal-header-actions">
-            <button id="btn-edit-rules" class="btn btn-sm" title="Edit Rules">Edit</button>
-            <button id="btn-close-rules-modal" class="btn-close" aria-label="Close">&times;</button>
-          </div>
+          <h3>Gym Rules (<span id="rules-count">0</span>)</h3>
+          <button id="btn-close-rules-modal" class="btn-close" aria-label="Close">&times;</button>
         </div>
 
         <div class="modal-body rules-body">
-          <!-- View Mode -->
-          <div id="rules-view-container">
-            <div id="rules-list" class="rules-list">
-              <!-- Dynamically populated -->
-            </div>
-          </div>
+          <form id="form-add-rule" class="add-form add-rule-form">
+            <input type="text" id="input-rule-text" placeholder="Add a gym rule..." required maxlength="200" autocomplete="off">
+            <button type="submit" class="btn btn-solid">Add</button>
+          </form>
 
-          <!-- Edit Mode -->
-          <div id="rules-edit-container" class="hidden">
-            <div id="rules-edit-list" class="rules-edit-list">
-              <!-- Dynamically populated edit rows -->
-            </div>
-            <div class="rules-edit-toolbar">
-              <button id="btn-add-rule-row" class="btn btn-sm" type="button">+ Add Rule</button>
-              <div class="rules-edit-actions">
-                <button id="btn-cancel-rules-edit" class="btn btn-sm" type="button">Cancel</button>
-                <button id="btn-save-rules" class="btn btn-sm btn-solid" type="button">Save</button>
-              </div>
-            </div>
+          <div id="rules-list" class="rules-list">
+            <!-- Dynamically populated simple text rules -->
           </div>
         </div>
       </div>
@@ -355,6 +340,6 @@
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
   </div>
 
-  <script src="js/app.js?v=11"></script>
+  <script src="js/app.js?v=12"></script>
 </body>
 </html>

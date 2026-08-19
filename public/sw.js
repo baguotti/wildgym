@@ -3,7 +3,7 @@
  * Ensures offline capability, instant loading, and seamless auto-updating.
  */
 
-const CACHE_NAME = 'wildgym-v1.0.6';
+const CACHE_NAME = 'wildgym-v1.0.7';
 
 const PRECACHE_ASSETS = [
   '/',

@@ -36,14 +36,10 @@
     btnCloseModal: document.getElementById('btn-close-modal'),
     rulesModal: document.getElementById('rules-modal'),
     btnCloseRulesModal: document.getElementById('btn-close-rules-modal'),
-    btnEditRules: document.getElementById('btn-edit-rules'),
-    rulesViewContainer: document.getElementById('rules-view-container'),
-    rulesEditContainer: document.getElementById('rules-edit-container'),
+    formAddRule: document.getElementById('form-add-rule'),
+    inputRuleText: document.getElementById('input-rule-text'),
     rulesList: document.getElementById('rules-list'),
-    rulesEditList: document.getElementById('rules-edit-list'),
-    btnAddRuleRow: document.getElementById('btn-add-rule-row'),
-    btnCancelRulesEdit: document.getElementById('btn-cancel-rules-edit'),
-    btnSaveRules: document.getElementById('btn-save-rules'),
+    rulesCount: document.getElementById('rules-count'),
     formAddMember: document.getElementById('form-add-member'),
     inputMemberName: document.getElementById('input-member-name'),
     inputMemberEmail: document.getElementById('input-member-email'),
@@ -328,93 +324,77 @@
       if (res.ok) {
         const data = await res.json();
         state.rules = data.rules || [];
-        renderRulesView();
+        renderRulesList();
       }
     } catch (e) {
       console.error('Failed to fetch rules', e);
     }
   }
 
-  async function saveRules(rulesArray) {
+  async function addRule(text) {
     try {
       const res = await fetch('/api/rules', {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rules: rulesArray })
+        body: JSON.stringify({ text })
       });
       if (res.ok) {
         const data = await res.json();
-        state.rules = data.rules || rulesArray;
-        renderRulesView();
-        toggleRulesEditMode(false);
-        showToast('Rules updated');
+        if (data.rule) {
+          state.rules.push(data.rule);
+        } else {
+          await fetchRules();
+        }
+        renderRulesList();
+        showToast('Rule added');
+        return true;
       } else {
         const err = await res.json();
-        showToast(err.error || 'Failed to save rules');
+        showToast(err.error || 'Failed to add rule');
+        return false;
+      }
+    } catch (e) {
+      showToast('Network error');
+      return false;
+    }
+  }
+
+  async function deleteRule(id) {
+    try {
+      const res = await fetch(`/api/rules/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        state.rules = state.rules.filter((r) => r.id !== id);
+        renderRulesList();
+        showToast('Rule removed');
+      } else {
+        showToast('Failed to delete rule');
       }
     } catch (e) {
       showToast('Network error');
     }
   }
 
-  function renderRulesView() {
+  function renderRulesList() {
+    if (!elements.rulesList) return;
+    if (elements.rulesCount) elements.rulesCount.textContent = state.rules.length;
     elements.rulesList.innerHTML = '';
+
     if (state.rules.length === 0) {
-      elements.rulesList.innerHTML = '<p style="color:var(--ink-muted); padding:8px 0;">No rules set.</p>';
+      elements.rulesList.innerHTML = '<div class="empty-rules-hint">No gym rules added yet.</div>';
       return;
     }
 
-    state.rules.forEach((r) => {
-      const item = document.createElement('div');
-      item.className = 'rule-item';
-      item.innerHTML = `
-        <span class="rule-tag">${escapeHTML(r.category || 'Rule')}</span>
-        <div class="rule-content">
-          <div class="rule-title">${escapeHTML(r.title)}</div>
-          ${r.subtitle ? `<div class="rule-sub">${escapeHTML(r.subtitle)}</div>` : ''}
-        </div>
+    state.rules.forEach((r, idx) => {
+      const row = document.createElement('div');
+      row.className = 'rule-row-item';
+      const text = r.text || r.title || '';
+      row.innerHTML = `
+        <div class="rule-row-num">${idx + 1}</div>
+        <div class="rule-row-text">${escapeHTML(text)}</div>
+        <button type="button" class="btn-del-rule" data-id="${r.id}" title="Delete rule" aria-label="Delete rule">&times;</button>
       `;
-      elements.rulesList.appendChild(item);
+      elements.rulesList.appendChild(row);
     });
-  }
-
-  function toggleRulesEditMode(isEdit) {
-    if (isEdit) {
-      elements.rulesViewContainer.classList.add('hidden');
-      elements.rulesEditContainer.classList.remove('hidden');
-      elements.btnEditRules.classList.add('hidden');
-      renderRulesEdit();
-    } else {
-      elements.rulesViewContainer.classList.remove('hidden');
-      elements.rulesEditContainer.classList.add('hidden');
-      elements.btnEditRules.classList.remove('hidden');
-    }
-  }
-
-  function renderRulesEdit() {
-    elements.rulesEditList.innerHTML = '';
-    state.rules.forEach((r) => {
-      elements.rulesEditList.appendChild(createRuleEditRow(r.category, r.title, r.subtitle));
-    });
-    if (state.rules.length === 0) {
-      elements.rulesEditList.appendChild(createRuleEditRow('Rule', '', ''));
-    }
-  }
-
-  function createRuleEditRow(category = 'Rule', title = '', subtitle = '') {
-    const row = document.createElement('div');
-    row.className = 'rule-edit-row';
-    row.innerHTML = `
-      <div class="rule-edit-fields">
-        <div class="rule-edit-top">
-          <input type="text" class="rule-edit-cat" placeholder="Tag" value="${escapeHTML(category)}" maxlength="25">
-          <input type="text" class="rule-edit-title" placeholder="Rule headline" value="${escapeHTML(title)}" maxlength="100">
-        </div>
-        <input type="text" class="rule-edit-sub" placeholder="Description / details (optional)" value="${escapeHTML(subtitle)}" maxlength="200">
-      </div>
-      <button class="btn-delete-rule" type="button" title="Delete rule">&times;</button>
-    `;
-    return row;
   }
 
   // Rendering
@@ -841,8 +821,33 @@
 
     if (elements.btnRules) {
       elements.btnRules.addEventListener('click', () => {
-        toggleRulesEditMode(false);
         if (elements.rulesModal) elements.rulesModal.classList.remove('hidden');
+        if (elements.inputRuleText) elements.inputRuleText.focus();
+      });
+    }
+
+    if (elements.formAddRule) {
+      elements.formAddRule.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = elements.inputRuleText ? elements.inputRuleText.value.trim() : '';
+        if (!text) return;
+        const success = await addRule(text);
+        if (success && elements.inputRuleText) {
+          elements.inputRuleText.value = '';
+          elements.inputRuleText.focus();
+        }
+      });
+    }
+
+    if (elements.rulesList) {
+      elements.rulesList.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btn-del-rule');
+        if (btn) {
+          const ruleId = parseInt(btn.dataset.id, 10);
+          if (ruleId) {
+            await deleteRule(ruleId);
+          }
+        }
       });
     }
 
@@ -857,60 +862,6 @@
         if (e.target === elements.rulesModal) {
           elements.rulesModal.classList.add('hidden');
         }
-      });
-    }
-
-    if (elements.btnEditRules) {
-      elements.btnEditRules.addEventListener('click', () => {
-        toggleRulesEditMode(true);
-      });
-    }
-
-    if (elements.btnCancelRulesEdit) {
-      elements.btnCancelRulesEdit.addEventListener('click', () => {
-        toggleRulesEditMode(false);
-      });
-    }
-
-    if (elements.btnAddRuleRow) {
-      elements.btnAddRuleRow.addEventListener('click', () => {
-        const newRow = createRuleEditRow('Rule', '', '');
-        elements.rulesEditList.appendChild(newRow);
-        const titleInput = newRow.querySelector('.rule-edit-title');
-        if (titleInput) titleInput.focus();
-      });
-    }
-
-    if (elements.rulesEditList) {
-      elements.rulesEditList.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-delete-rule')) {
-          const row = e.target.closest('.rule-edit-row');
-          if (row) row.remove();
-        }
-      });
-    }
-
-    if (elements.btnSaveRules) {
-      elements.btnSaveRules.addEventListener('click', () => {
-        const rows = elements.rulesEditList.querySelectorAll('.rule-edit-row');
-        const updatedRules = [];
-        rows.forEach((row) => {
-          const cat = row.querySelector('.rule-edit-cat').value.trim();
-          const title = row.querySelector('.rule-edit-title').value.trim();
-          const sub = row.querySelector('.rule-edit-sub').value.trim();
-          if (title) {
-            updatedRules.push({
-              category: cat || 'Rule',
-              title: title,
-              subtitle: sub
-            });
-          }
-        });
-        if (updatedRules.length === 0) {
-          showToast('Please provide at least 1 rule');
-          return;
-        }
-        saveRules(updatedRules);
       });
     }
 
@@ -1169,8 +1120,8 @@
     if (elements.btnDrawerRules) {
       elements.btnDrawerRules.addEventListener('click', () => {
         closeDrawer();
-        toggleRulesEditMode(false);
         if (elements.rulesModal) elements.rulesModal.classList.remove('hidden');
+        if (elements.inputRuleText) elements.inputRuleText.focus();
       });
     }
 
